@@ -179,7 +179,7 @@ clone_project() {
 
     if ! command -v git &> /dev/null; then
         echo -e "${YELLOW}⚠️  Git not available. Trying wget/curl...${NC}"
-        local zip_url="https://gitee.com/zhayujie/MetaClaw/repository/archive/master.zip"
+        local zip_url="https://github.com/WarholYuan/metaclaw/archive/refs/heads/master.zip"
         if command -v wget &> /dev/null; then
             wget "$zip_url" -O MetaClaw.zip
         elif command -v curl &> /dev/null; then
@@ -189,7 +189,11 @@ clone_project() {
             exit 1
         fi
         unzip MetaClaw.zip
-        mv MetaClaw-master MetaClaw
+        if [ -d "metaclaw-master" ]; then
+            mv metaclaw-master MetaClaw
+        elif [ -d "MetaClaw-master" ]; then
+            mv MetaClaw-master MetaClaw
+        fi
         rm MetaClaw.zip
     else
         local clone_ok=false
@@ -206,11 +210,11 @@ clone_project() {
         # Test GitHub connectivity before attempting clone
         if curl -sI --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
             echo -e "${YELLOW}🌐 GitHub is reachable, cloning from GitHub...${NC}"
-            _timeout 60 git clone --depth 10 --progress https://github.com/zhayujie/MetaClaw.git && clone_ok=true
+            _timeout 60 git clone --depth 10 --progress https://github.com/WarholYuan/metaclaw.git MetaClaw && clone_ok=true
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${YELLOW}⚠️  GitHub clone failed or timed out, switching to Gitee mirror...${NC}"
-            _timeout 30 git clone --depth 10 --progress https://gitee.com/zhayujie/MetaClaw.git && clone_ok=true
+            _timeout 30 git clone --depth 10 --progress https://github.com/WarholYuan/metaclaw.git MetaClaw && clone_ok=true
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
@@ -853,7 +857,7 @@ cmd_update() {
             pull_ok=true
         else
             echo -e "${YELLOW}⚠️  git pull failed, trying Gitee mirror...${NC}"
-            git remote set-url origin https://gitee.com/zhayujie/MetaClaw.git
+            git remote set-url origin https://github.com/WarholYuan/metaclaw.git
             if git pull; then
                 pull_ok=true
             else

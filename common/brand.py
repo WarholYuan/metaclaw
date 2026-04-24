@@ -1,0 +1,13 @@
+import os
+
+
+APP_NAME = os.environ.get("APP_BRAND_NAME", "MetaClaw")
+CLI_NAME = os.environ.get("APP_CLI_NAME", "metaclaw")
+WORKSPACE_NAME = os.environ.get("APP_WORKSPACE_NAME", "metaclaw")
+ENV_DIR_NAME = os.environ.get("APP_ENV_DIR_NAME", ".metaclaw")
+
+DEFAULT_AGENT_WORKSPACE = f"~/{WORKSPACE_NAME}"
+DEFAULT_ENV_DIR = f"~/{ENV_DIR_NAME}"
+DEFAULT_ENV_FILE = f"{DEFAULT_ENV_DIR}/.env"
+DEFAULT_WEIXIN_CREDENTIALS_PATH = f"~/.weixin_{WORKSPACE_NAME}_credentials.json"
+DEFAULT_PID_FILE = f".{CLI_NAME}.pid"

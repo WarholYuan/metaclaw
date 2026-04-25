@@ -639,14 +639,14 @@ start_project() {
         echo -e "  ${GREEN}metaclaw restart${NC}    Restart the service"
         echo -e "  ${GREEN}metaclaw status${NC}     Check status"
         echo -e "  ${GREEN}metaclaw logs${NC}       View logs"
-        echo -e "  ${GREEN}metaclaw update${NC}     Update and restart"
+        echo -e "  ${GREEN}metaclaw update 2.0.9${NC}  Update to a version and restart"
         echo -e "  ${GREEN}metaclaw install-browser${NC}  Install browser tool"
     else
         echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
         echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
         echo -e "  ${GREEN}./run.sh status${NC}     Check status"
         echo -e "  ${GREEN}./run.sh logs${NC}       View logs"
-        echo -e "  ${GREEN}./run.sh update${NC}     Update and restart"
+        echo -e "  ${GREEN}./run.sh update 2.0.9${NC}  Update to a version and restart"
     fi
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo ""
@@ -673,12 +673,13 @@ show_usage() {
     echo -e "  ${GREEN}status${NC}     Check service status"
     echo -e "  ${GREEN}logs${NC}       View logs (tail -f)"
     echo -e "  ${GREEN}config${NC}     Reconfigure project"
-    echo -e "  ${GREEN}update${NC}     Update and restart"
+    echo -e "  ${GREEN}update [version]${NC}  Update and restart"
     echo ""
     echo -e "${YELLOW}Examples:${NC}"
     echo -e "  ${GREEN}./run.sh start${NC}"
     echo -e "  ${GREEN}./run.sh logs${NC}"
     echo -e "  ${GREEN}./run.sh status${NC}"
+    echo -e "  ${GREEN}./run.sh update 2.0.9${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
 }
 
@@ -846,21 +847,56 @@ cmd_config() {
 
 # Update project
 cmd_update() {
+    local target_version=""
+    local force_update=false
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --force)
+                force_update=true
+                ;;
+            *)
+                if [ -z "$target_version" ]; then
+                    target_version="$1"
+                else
+                    echo -e "${RED}❌ Unknown update argument: $1${NC}"
+                    exit 1
+                fi
+                ;;
+        esac
+        shift
+    done
+
     echo -e "${GREEN}${EMOJI_WRENCH} Updating MetaClaw...${NC}"
     cd "${BASE_DIR}"
     
-    # Pull latest code first (service still running)
-    local pull_ok=false
+    # Update code first (service still running)
     if [ -d .git ]; then
-        echo -e "${GREEN}🔄 Pulling latest code...${NC}"
-        if git pull; then
-            pull_ok=true
+        local dirty_files
+        dirty_files=$(git status --porcelain)
+        if [ -n "$dirty_files" ] && [ "$force_update" = false ]; then
+            echo -e "${RED}❌ Local source files have changes. Update aborted.${NC}"
+            echo -e "${YELLOW}Run 'git status' here, or use './run.sh update ${target_version:-2.0.9} --force' if you know what you are doing.${NC}"
+            exit 1
+        fi
+
+        if [ -n "$target_version" ]; then
+            target_version="${target_version#v}"
+            echo -e "${GREEN}🔄 Fetching tags and updating to ${target_version}...${NC}"
+            if ! git fetch --tags --force; then
+                echo -e "${RED}❌ Failed to fetch version tags. Update aborted.${NC}"
+                exit 1
+            fi
+            if ! git rev-parse --verify "refs/tags/${target_version}" > /dev/null 2>&1; then
+                echo -e "${RED}❌ Version tag not found: ${target_version}${NC}"
+                exit 1
+            fi
+            if ! git checkout --detach "${target_version}"; then
+                echo -e "${RED}❌ Failed to checkout version ${target_version}. Update aborted.${NC}"
+                exit 1
+            fi
         else
-            echo -e "${YELLOW}⚠️  git pull failed, trying Gitee mirror...${NC}"
-            git remote set-url origin https://github.com/WarholYuan/metaclaw.git
-            if git pull; then
-                pull_ok=true
-            else
+            echo -e "${GREEN}🔄 Pulling latest code...${NC}"
+            if ! git pull; then
                 echo -e "${RED}❌ Failed to pull code. Update aborted.${NC}"
                 exit 1
             fi
@@ -967,7 +1003,7 @@ main() {
         status)  cmd_status ;;
         logs)    cmd_logs ;;
         config)  cmd_config ;;
-        update)  cmd_update ;;
+        update)  shift; cmd_update "$@" ;;
         _post_update) cmd_post_update ;;
         help|--help|-h)
             show_usage

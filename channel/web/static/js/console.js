@@ -12,10 +12,10 @@ let APP_VERSION = '';
 // =====================================================================
 const I18N = {
     zh: {
-        console: '控制台',
-        nav_chat: '对话', nav_manage: '管理', nav_monitor: '监控',
+        console: '',
+        nav_chat: '', nav_manage: '', nav_monitor: '',
         menu_chat: '对话', menu_config: '配置', menu_skills: '技能',
-        menu_memory: '记忆', menu_knowledge: '知识', menu_channels: '通道', menu_tasks: '定时',
+        menu_memory: '记忆', menu_knowledge: '知识库', menu_channels: '通道', menu_tasks: '定时',
         menu_logs: '日志',
         knowledge_title: '知识库', knowledge_desc: '浏览和探索你的知识库',
         knowledge_tab_docs: '文档', knowledge_tab_graph: '图谱',
@@ -30,7 +30,7 @@ const I18N = {
         example_knowledge_title: '知识库', example_knowledge_text: '查看知识库当前文档情况',
         example_skill_title: '技能系统', example_skill_text: '查看所有支持的工具和技能',
         example_web_title: '指令中心', example_web_text: '查看全部命令',
-        input_placeholder: '输入消息，或输入 / 使用指令',
+        input_placeholder: '向 MetaClaw 提问，或用 @ 引用文件',
         config_title: '配置管理', config_desc: '管理模型和 Agent 配置',
         config_model: '模型配置', config_agent: 'Agent 配置',
         config_channel: '通道配置',
@@ -100,8 +100,8 @@ const I18N = {
     en: {
         console: 'Console',
         nav_chat: 'Chat', nav_manage: 'Management', nav_monitor: 'Monitor',
-        menu_chat: 'Chat', menu_config: 'Config', menu_skills: 'Skills',
-        menu_memory: 'Memory', menu_knowledge: 'Knowledge', menu_channels: 'Channels', menu_tasks: 'Tasks',
+        menu_chat: 'New chat', menu_config: 'Search', menu_skills: 'Skills',
+        menu_memory: 'Project', menu_knowledge: 'Knowledge', menu_channels: 'Channels', menu_tasks: 'Tasks',
         menu_logs: 'Logs',
         knowledge_title: 'Knowledge', knowledge_desc: 'Browse and explore your knowledge base',
         knowledge_tab_docs: 'Documents', knowledge_tab_graph: 'Graph',
@@ -218,7 +218,7 @@ function toggleLanguage() {
 // =====================================================================
 // Theme
 // =====================================================================
-let currentTheme = localStorage.getItem('metaclaw_theme') || 'dark';
+let currentTheme = localStorage.getItem('metaclaw_theme') || 'light';
 
 function applyTheme() {
     const root = document.documentElement;
@@ -489,8 +489,7 @@ let historyLoading = false;
 fetch('/config').then(r => r.json()).then(data => {
     if (data.status === 'success') {
         appConfig = data;
-        const title = data.title || 'MetaClaw';
-        document.getElementById('welcome-title').textContent = title;
+        document.getElementById('welcome-title').textContent = currentLang === 'zh' ? '今天想做什么？' : 'What should we work on?';
         initConfigView(data);
     }
     loadHistory(1);
@@ -940,6 +939,7 @@ function sendMessage() {
     const ws = document.getElementById('welcome-screen');
     const isFirstMessage = !!ws;
     if (ws) ws.remove();
+    document.body.classList.remove('empty-chat');
 
     const titleInfo = (isFirstMessage && text) ? { sid: sessionId, userMsg: text } : null;
 
@@ -1620,6 +1620,7 @@ function loadHistory(page) {
             if (isFirstLoad) {
                 const ws = document.getElementById('welcome-screen');
                 if (ws) ws.remove();
+                document.body.classList.remove('empty-chat');
             }
 
             // Build a fragment of history message elements in chronological order
@@ -1725,13 +1726,14 @@ function newChat() {
     loadingContainers = {};
     startPolling();  // bump generation so old loop self-cancels, new loop uses fresh sessionId
     messagesDiv.innerHTML = '';
+    document.body.classList.add('empty-chat');
     const ws = document.createElement('div');
     ws.id = 'welcome-screen';
     ws.className = 'flex flex-col items-center justify-center h-full px-6 pb-16';
     ws.style.paddingTop = '6vh';
     ws.innerHTML = `
         <img src="assets/logo-mark.svg" alt="MetaClaw" class="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-primary-500/20">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">${appConfig.title || 'MetaClaw'}</h1>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">${currentLang === 'zh' ? '今天想做什么？' : 'What should we work on?'}</h1>
         <p class="text-slate-500 dark:text-slate-400 text-center max-w-lg mb-10 leading-relaxed" data-i18n="welcome_subtitle">${t('welcome_subtitle')}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
             <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
@@ -1754,8 +1756,8 @@ function newChat() {
             </div>
             <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-                        <i class="fas fa-code text-emerald-500 text-xs"></i>
+                    <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                        <i class="fas fa-code text-amber-500 text-xs"></i>
                     </div>
                     <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_code_title">${t('example_code_title')}</span>
                 </div>
@@ -2716,14 +2718,10 @@ function loadSkillsSection() {
 
 function renderSkillCard(card, sk) {
     const enabled = sk.enabled;
-    const iconColor = enabled ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600';
-    const trackClass = enabled
-        ? 'bg-primary-400'
-        : 'bg-slate-200 dark:bg-slate-700';
-    const thumbTranslate = enabled ? 'translate-x-3' : 'translate-x-0.5';
+    const iconColor = enabled ? 'skill-icon-on' : 'skill-icon-off';
     card.innerHTML = `
-        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-bolt ${iconColor} text-sm"></i>
+        <div class="skill-card-icon">
+            <i class="fas fa-bolt ${iconColor}"></i>
         </div>
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
@@ -2732,10 +2730,10 @@ function renderSkillCard(card, sk) {
                     role="switch"
                     aria-checked="${enabled}"
                     onclick="toggleSkill('${escapeHtml(sk.name)}', ${enabled})"
-                    class="relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${trackClass}"
+                    class="skill-toggle ${enabled ? 'is-on' : ''}"
                     title="${enabled ? (currentLang === 'zh' ? '点击禁用' : 'Click to disable') : (currentLang === 'zh' ? '点击启用' : 'Click to enable')}"
                 >
-                    <span class="inline-block h-3 w-3 mt-0.5 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${thumbTranslate}"></span>
+                    <span></span>
                 </button>
             </div>
             <p class="text-xs text-slate-400 dark:text-slate-500 line-clamp-2">${escapeHtml(sk.description || '--')}</p>
@@ -2990,7 +2988,7 @@ function renderActiveChannels() {
             ${wecomNeedsCreds ? `<div id="wecom-active-auth" class="flex flex-col items-center py-2">
                 <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">${t('wecom_scan_desc')}</p>
                 <button onclick="startWecomBotAuthInCard()"
-                    class="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium
+                    class="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium
                            cursor-pointer transition-colors duration-150">
                     <i class="fas fa-qrcode mr-2"></i>${t('wecom_scan_btn')}
                 </button>
@@ -3530,7 +3528,7 @@ function switchWecomBotMode(mode) {
             <div class="flex flex-col items-center py-4">
                 <p class="text-sm text-slate-600 dark:text-slate-300 mb-2">${t('wecom_scan_desc')}</p>
                 <button onclick="startWecomBotAuth()"
-                    class="mt-3 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium
+                    class="mt-3 px-6 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium
                            cursor-pointer transition-colors duration-150">
                     <i class="fas fa-qrcode mr-2"></i>${t('wecom_scan_btn')}
                 </button>
@@ -3555,10 +3553,10 @@ function startWecomBotAuth() {
                 if (statusEl) {
                     statusEl.innerHTML = `
                         <div class="flex flex-col items-center py-2">
-                            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
-                                <i class="fas fa-check text-emerald-500 text-lg"></i>
+                            <div class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center mb-2">
+                                <i class="fas fa-check text-amber-500 text-lg"></i>
                             </div>
-                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">${t('wecom_scan_success')}</p>
+                            <p class="text-sm font-medium text-amber-600 dark:text-amber-400">${t('wecom_scan_success')}</p>
                         </div>`;
                 }
                 connectWecomBotAfterAuth(bot.botid, bot.secret);
@@ -3612,10 +3610,10 @@ function startWecomBotAuthInCard() {
                 if (statusEl) {
                     statusEl.innerHTML = `
                         <div class="flex flex-col items-center py-2">
-                            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
-                                <i class="fas fa-check text-emerald-500 text-lg"></i>
+                            <div class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center mb-2">
+                                <i class="fas fa-check text-amber-500 text-lg"></i>
                             </div>
-                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">${t('wecom_scan_success')}</p>
+                            <p class="text-sm font-medium text-amber-600 dark:text-amber-400">${t('wecom_scan_success')}</p>
                         </div>`;
                 }
                 connectWecomBotAfterAuth(bot.botid, bot.secret);
@@ -4328,9 +4326,9 @@ function initApp() {
 
     fetch('/api/version').then(r => r.json()).then(data => {
         APP_VERSION = `v${data.version}`;
-        document.getElementById('sidebar-version').textContent = `${appConfig.title || 'MetaClaw'} ${APP_VERSION}`;
+        document.getElementById('sidebar-version').innerHTML = '<i class="fas fa-gear"></i><span>设置</span>';
     }).catch(() => {
-        document.getElementById('sidebar-version').textContent = appConfig.title || 'MetaClaw';
+        document.getElementById('sidebar-version').innerHTML = '<i class="fas fa-gear"></i><span>设置</span>';
     });
     chatInput.focus();
 }

@@ -174,21 +174,53 @@ def restart(ctx, no_logs):
 
 
 @click.command()
+@click.argument("version", required=False)
+@click.option("--force", is_flag=True, help="Allow update with local source changes")
 @click.pass_context
-def update(ctx):
-    """Update and restart agent service."""
+def update(ctx, version, force):
+    """Update and restart agent service.
+
+    VERSION is optional. If provided, update to that Git tag, for example:
+    metaclaw update 2.0.9
+    """
     root = get_project_root()
 
     # 1. Stop service first so git pull won't conflict with running code
     ctx.invoke(stop)
 
-    # 2. Git pull
+    # 2. Git update
     if os.path.isdir(os.path.join(root, ".git")):
-        click.echo("Pulling latest code...")
-        ret = subprocess.call(["git", "pull"], cwd=root)
-        if ret != 0:
-            click.echo("Error: git pull failed.", err=True)
+        dirty = subprocess.check_output(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            text=True,
+        ).strip()
+        if dirty and not force:
+            click.echo("Error: local source files have changes. Update aborted.", err=True)
+            click.echo("Run 'git status' in the app directory, or use --force if you know what you are doing.", err=True)
             sys.exit(1)
+
+        if version:
+            target = version[1:] if version.startswith("v") else version
+            click.echo(f"Fetching tags and updating to {target}...")
+            ret = subprocess.call(["git", "fetch", "--tags", "--force"], cwd=root)
+            if ret != 0:
+                click.echo("Error: git fetch failed.", err=True)
+                sys.exit(1)
+            ret = subprocess.call(["git", "rev-parse", "--verify", f"refs/tags/{target}"], cwd=root)
+            if ret != 0:
+                click.echo(f"Error: version tag not found: {target}", err=True)
+                sys.exit(1)
+            ret = subprocess.call(["git", "checkout", "--detach", target], cwd=root)
+            if ret != 0:
+                click.echo(f"Error: checkout failed for version {target}.", err=True)
+                sys.exit(1)
+        else:
+            click.echo("Pulling latest code...")
+            ret = subprocess.call(["git", "pull"], cwd=root)
+            if ret != 0:
+                click.echo("Error: git pull failed.", err=True)
+                sys.exit(1)
     else:
         click.echo("Not a git repository, skipping code update.")
 

@@ -192,9 +192,14 @@ class FeiShuChanel(ChatChannel):
             except Exception as e:
                 logger.error(f"[FeiShu] websocket handle message error: {e}", exc_info=True)
 
+        def handle_message_read_event(data) -> None:
+            """Ignore read-receipt events if the app subscribed to them."""
+            logger.debug("[FeiShu] websocket message read event ignored")
+
         # 构建事件分发器
         event_handler = lark.EventDispatcherHandler.builder("", "") \
             .register_p2_im_message_receive_v1(handle_message_event) \
+            .register_p2_im_message_message_read_v1(handle_message_read_event) \
             .build()
 
         def start_client_with_retry():

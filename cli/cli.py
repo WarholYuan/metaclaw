@@ -20,7 +20,7 @@ Commands:
   start    Start {APP_NAME}.
   stop     Stop {APP_NAME}.
   restart  Restart {APP_NAME}.
-  update   Update {APP_NAME} and restart.
+  update   Update {APP_NAME} to a version and restart.
   status   Show {APP_NAME} running status.
   logs     View {APP_NAME} logs.
   skill    Manage {APP_NAME} skills.

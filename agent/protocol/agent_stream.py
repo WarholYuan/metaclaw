@@ -11,6 +11,7 @@ from agent.protocol.models import LLMRequest, LLMModel
 from agent.protocol.message_utils import sanitize_claude_messages, compress_turn_to_text_only
 from agent.tools.base_tool import BaseTool, ToolResult
 from common.log import logger
+from common.session_cancel import SessionCancelledError, clear_cancel, raise_if_cancelled
 
 
 # Maximum number of characters of model "reasoning / thinking" content to persist
@@ -108,6 +109,12 @@ class AgentStreamExecutor:
                 })
             except Exception as e:
                 logger.error(f"Event callback error: {e}")
+
+    def _session_id(self) -> Optional[str]:
+        return getattr(self.agent, '_current_session_id', None)
+
+    def _raise_if_cancelled(self):
+        raise_if_cancelled(self._session_id())
     
     def _is_thinking_enabled(self) -> bool:
         from config import conf
@@ -253,12 +260,14 @@ class AgentStreamExecutor:
 
         try:
             while turn < self.max_turns:
+                self._raise_if_cancelled()
                 turn += 1
                 logger.info(f"[Agent] 第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Call LLM (enable retry_on_empty for better reliability)
                 assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=True)
+                self._raise_if_cancelled()
                 final_response = assistant_msg
 
                 # No tool calls, end loop
@@ -356,7 +365,9 @@ class AgentStreamExecutor:
 
                 try:
                     for tool_call in tool_calls:
+                        self._raise_if_cancelled()
                         result = self._execute_tool(tool_call)
+                        self._raise_if_cancelled()
                         tool_results.append(result)
                         
                         # Debug: Check if tool is being called repeatedly with same args
@@ -513,6 +524,7 @@ class AgentStreamExecutor:
                 
                 # Call LLM one more time to get summary (without retry to avoid loops)
                 try:
+                    self._raise_if_cancelled()
                     summary_response, summary_tools = self._call_llm_stream(retry_on_empty=False)
                     if summary_response:
                         final_response = summary_response
@@ -538,12 +550,16 @@ class AgentStreamExecutor:
                         self.messages.pop(prompt_insert_idx)
                         logger.debug("[Agent] Removed injected max-steps prompt from message history")
 
+        except SessionCancelledError:
+            final_response = "已停止当前任务。"
+            logger.info(f"[Agent] session cancelled, session_id={self._session_id()}")
         except Exception as e:
             logger.error(f"❌ Agent执行错误: {e}")
             self._emit_event("error", {"error": str(e)})
             raise
 
         finally:
+            clear_cancel(self._session_id())
             final_response = final_response.strip() if final_response else final_response
             logger.info(f"[Agent] 🏁 完成 ({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
@@ -569,6 +585,7 @@ class AgentStreamExecutor:
         # NOT here — trimming mid-execution would strip the current run's
         # tool_use/tool_result chains and cause LLM loops.
         self._validate_and_fix_messages()
+        self._raise_if_cancelled()
 
         # Prepare messages
         messages = self._prepare_messages()
@@ -608,6 +625,7 @@ class AgentStreamExecutor:
             stream = self.model.call_stream(request)
 
             for chunk in stream:
+                self._raise_if_cancelled()
                 # Check for errors
                 if isinstance(chunk, dict) and chunk.get("error"):
                     # Extract error message from nested structure
@@ -920,6 +938,7 @@ class AgentStreamExecutor:
         tool_name = tool_call["name"]
         tool_id = tool_call["id"]
         arguments = tool_call["arguments"]
+        self._raise_if_cancelled()
 
         # Check if there was a JSON parse error
         if "_parse_error" in tool_call:
@@ -973,6 +992,7 @@ class AgentStreamExecutor:
             # Execute tool
             start_time = time.time()
             result: ToolResult = tool.execute_tool(arguments)
+            self._raise_if_cancelled()
             execution_time = time.time() - start_time
 
             result_dict = {

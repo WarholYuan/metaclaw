@@ -3,6 +3,7 @@ import re
 import threading
 import time
 from asyncio import CancelledError
+from concurrent.futures import CancelledError as FutureCancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
 
 from bridge.context import *
@@ -285,6 +286,9 @@ class ChatChannel(Channel):
             return reply
 
     def _send_reply(self, context: Context, reply: Reply):
+        if context.get("_drop_reply"):
+            logger.warning("[chat_channel] drop late reply, session_id={}".format(context.get("session_id")))
+            return
         if reply and reply.type:
             e_context = PluginManager().emit_event(
                 EventContext(
@@ -406,20 +410,53 @@ class ChatChannel(Channel):
 
     def _thread_pool_callback(self, session_id, **kwargs):
         def func(worker: Future):
+            timer = getattr(worker, "_metaclaw_timeout_timer", None)
+            if timer:
+                timer.cancel()
             try:
                 worker_exception = worker.exception()
                 if worker_exception:
                     self._fail_callback(session_id, exception=worker_exception, **kwargs)
                 else:
                     self._success_callback(session_id, **kwargs)
-            except CancelledError as e:
+            except (CancelledError, FutureCancelledError) as e:
                 logger.info("Worker cancelled, session_id = {}".format(session_id))
             except Exception as e:
                 logger.exception("Worker raise exception: {}".format(e))
+            released = getattr(worker, "_metaclaw_released", None)
+            if released and released.is_set():
+                return
+            if released:
+                released.set()
             with self.lock:
-                self.sessions[session_id][1].release()
+                if session_id in self.sessions:
+                    self.sessions[session_id][1].release()
 
         return func
+
+    def _get_context_timeout_seconds(self, context: Context):
+        return None
+
+    def _on_context_timeout(self, context: Context):
+        logger.warning("[chat_channel] context timeout, session_id={}".format(context.get("session_id")))
+
+    def _timeout_context(self, session_id: str, future: Future, context: Context):
+        if future.done():
+            return
+        context["_timed_out"] = True
+        context["_drop_reply"] = True
+        future._metaclaw_timed_out = True
+        future.cancel()
+        self._on_context_timeout(context)
+        released = getattr(future, "_metaclaw_released", None)
+        if released and released.is_set():
+            return
+        if released:
+            released.set()
+        with self.lock:
+            if session_id in self.sessions:
+                logger.warning("[chat_channel] releasing timed out session, session_id={}".format(session_id))
+                self.sessions[session_id][1].release()
 
     def produce(self, context: Context):
         session_id = context["session_id"]
@@ -447,6 +484,17 @@ class ChatChannel(Channel):
                         context = context_queue.get()
                         logger.debug("[chat_channel] consume context: {}".format(context))
                         future: Future = handler_pool.submit(self._handle, context)
+                        future._metaclaw_released = threading.Event()
+                        timeout_seconds = self._get_context_timeout_seconds(context)
+                        if timeout_seconds and timeout_seconds > 0:
+                            timer = threading.Timer(
+                                timeout_seconds,
+                                self._timeout_context,
+                                args=(session_id, future, context)
+                            )
+                            timer.daemon = True
+                            future._metaclaw_timeout_timer = timer
+                            timer.start()
                         future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                         with self.lock:
                             if session_id not in self.futures:
@@ -454,7 +502,10 @@ class ChatChannel(Channel):
                             self.futures[session_id].append(future)
                     elif semaphore._initial_value == semaphore._value + 1:  # 除了当前，没有任务再申请到信号量，说明所有任务都处理完毕
                         with self.lock:
-                            self.futures[session_id] = [t for t in self.futures[session_id] if not t.done()]
+                            self.futures[session_id] = [
+                                t for t in self.futures[session_id]
+                                if not t.done() and not getattr(t, "_metaclaw_timed_out", False)
+                            ]
                             assert len(self.futures[session_id]) == 0, "thread pool error"
                             del self.sessions[session_id]
                     else:

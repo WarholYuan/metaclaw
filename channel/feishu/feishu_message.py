@@ -25,6 +25,10 @@ class FeishuMessage(ChatMessage):
             self.ctype = ContextType.TEXT
             content = json.loads(msg.get('content'))
             self.content = content.get("text").strip()
+        elif msg_type == "interactive":
+            self.ctype = ContextType.TEXT
+            content = json.loads(msg.get("content") or "{}")
+            self.content = content.get("title") or content.get("text") or json.dumps(content, ensure_ascii=False)
         elif msg_type == "image":
             # 单张图片消息：下载并缓存，等待用户提问时一起发送
             self.ctype = ContextType.IMAGE

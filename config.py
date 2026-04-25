@@ -150,6 +150,15 @@ available_setting = {
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
     "feishu_event_mode": "websocket",  # 飞书事件接收模式: webhook(HTTP服务器) 或 websocket(长连接)
+    "feishu_request_timeout_seconds": 300,  # 飞书单条消息最大等待时间，超时后释放会话队列
+    "feishu_heartbeat_interval_seconds": 20,  # 飞书长任务卡片心跳更新时间，设为0关闭
+    "feishu_fast_reply_threshold_seconds": 5,  # 该时间内完成的飞书回复保持简洁展示
+    "feishu_detail_expand_threshold_seconds": 10,  # 超过该时间后展开工具/思考等细节
+    "feishu_reasoning_summary_chars": 260,  # 飞书卡片底部思考摘要最大字数
+    "feishu_question_preview_chars": 360,  # 飞书卡片顶部原消息预览最大字数
+    "feishu_answer_card_chars": 3600,  # 飞书单张回复卡片正文最大展示字数，超出会自动分卡片发送
+    "feishu_footer_card_chars": 1600,  # 飞书卡片底部工具/状态最大展示字数
+    "feishu_long_answer_notice_threshold": 3600,  # 超过该长度时在卡片内提示内容较长
     # 钉钉配置
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret

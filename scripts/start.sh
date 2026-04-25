@@ -1,5 +1,5 @@
 #!/bin/bash
-#后台运行Chat_on_webchat执行脚本
+# 后台运行 MetaClaw 执行脚本
 
 cd `dirname $0`/..
 export BASE_DIR=`pwd`
@@ -13,4 +13,4 @@ fi
 
 nohup python3 "${BASE_DIR}/app.py" & tail -f "${BASE_DIR}/nohup.out"
 
-echo "Chat_on_webchat is starting，you can check the ${BASE_DIR}/nohup.out"
+echo "MetaClaw is starting, you can check ${BASE_DIR}/nohup.out"

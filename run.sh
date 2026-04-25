@@ -15,7 +15,7 @@ NC='\033[0m'
 
 # Emojis
 EMOJI_ROCKET="🚀"
-EMOJI_COW="🐄"
+EMOJI_MARK="◆"
 EMOJI_CHECK="✅"
 EMOJI_CROSS="❌"
 EMOJI_WARN="⚠️"
@@ -599,12 +599,12 @@ start_project() {
     echo -e "${GREEN}${EMOJI_ROCKET} Starting MetaClaw...${NC}"
     sleep 1
 
-    local USE_COW=false
+    local USE_METACLAW_CLI=false
     if command -v metaclaw &> /dev/null; then
-        USE_COW=true
+        USE_METACLAW_CLI=true
     fi
 
-    if $USE_COW; then
+    if $USE_METACLAW_CLI; then
         cd "${BASE_DIR}"
         metaclaw start --no-logs
     else
@@ -616,10 +616,10 @@ start_project() {
 
         if [[ "$OS_TYPE" == "Linux" ]]; then
             nohup setsid $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
-            echo -e "${GREEN}${EMOJI_COW} MetaClaw started on Linux (using $PYTHON_CMD)${NC}"
+            echo -e "${GREEN}${EMOJI_MARK} MetaClaw started on Linux (using $PYTHON_CMD)${NC}"
         elif [[ "$OS_TYPE" == "Darwin" ]]; then
             nohup $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
-            echo -e "${GREEN}${EMOJI_COW} MetaClaw started on macOS (using $PYTHON_CMD)${NC}"
+            echo -e "${GREEN}${EMOJI_MARK} MetaClaw started on macOS (using $PYTHON_CMD)${NC}"
         else
             echo -e "${RED}❌ Unsupported OS: ${OS_TYPE}${NC}"
             exit 1
@@ -634,7 +634,7 @@ start_project() {
     echo -e "${CYAN}$ACCESS_INFO${NC}"
     echo ""
     echo -e "${CYAN}${BOLD}Management Commands:${NC}"
-    if $USE_COW; then
+    if $USE_METACLAW_CLI; then
         echo -e "  ${GREEN}metaclaw stop${NC}       Stop the service"
         echo -e "  ${GREEN}metaclaw restart${NC}    Restart the service"
         echo -e "  ${GREEN}metaclaw status${NC}     Check status"
@@ -659,7 +659,7 @@ start_project() {
 # Show usage
 show_usage() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${CYAN}${BOLD}   ${EMOJI_COW} MetaClaw Management Script${NC}"
+    echo -e "${CYAN}${BOLD}   ${EMOJI_MARK} MetaClaw Management Script${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo ""
     echo -e "${YELLOW}Usage:${NC}"
@@ -701,7 +701,7 @@ is_running() {
 }
 
 # Check if metaclaw CLI is available
-has_cow() {
+has_metaclaw_cli() {
     command -v metaclaw &> /dev/null
 }
 
@@ -713,7 +713,7 @@ cmd_start() {
         exit 1
     fi
 
-    if has_cow; then
+    if has_metaclaw_cli; then
         cd "${BASE_DIR}"
         metaclaw start
     else
@@ -729,7 +729,7 @@ cmd_start() {
 
 # Stop service
 cmd_stop() {
-    if has_cow; then
+    if has_metaclaw_cli; then
         cd "${BASE_DIR}"
         metaclaw stop
     else
@@ -762,7 +762,7 @@ cmd_stop() {
 
 # Restart service
 cmd_restart() {
-    if has_cow; then
+    if has_metaclaw_cli; then
         cd "${BASE_DIR}"
         metaclaw restart
     else
@@ -774,12 +774,12 @@ cmd_restart() {
 
 # Check status
 cmd_status() {
-    if has_cow; then
+    if has_metaclaw_cli; then
         cd "${BASE_DIR}"
         metaclaw status
     else
         echo -e "${CYAN}${BOLD}=========================================${NC}"
-        echo -e "${CYAN}${BOLD}   ${EMOJI_COW} MetaClaw Status${NC}"
+        echo -e "${CYAN}${BOLD}   ${EMOJI_MARK} MetaClaw Status${NC}"
         echo -e "${CYAN}${BOLD}=========================================${NC}"
 
         if is_running; then
@@ -806,7 +806,7 @@ cmd_status() {
 
 # View logs
 cmd_logs() {
-    if has_cow; then
+    if has_metaclaw_cli; then
         cd "${BASE_DIR}"
         metaclaw logs -f
     else
@@ -894,7 +894,7 @@ cmd_post_update() {
 install_mode() {
     clear
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${CYAN}${BOLD}   ${EMOJI_COW} MetaClaw Installation${NC}"
+    echo -e "${CYAN}${BOLD}   ${EMOJI_MARK} MetaClaw Installation${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo ""
     sleep 1

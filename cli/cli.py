@@ -30,7 +30,7 @@ Commands:
 Tip: You can also send /help, /skill list, etc. in agent chat."""
 
 
-class CowCLI(click.Group):
+class MetaClawCLI(click.Group):
 
     def format_help(self, ctx, formatter):
         formatter.write(HELP_TEXT.strip())
@@ -43,7 +43,7 @@ class CowCLI(click.Group):
         return super().parse_args(ctx, args)
 
 
-@click.group(cls=CowCLI, invoke_without_command=True, context_settings=dict(help_option_names=[]))
+@click.group(cls=MetaClawCLI, invoke_without_command=True, context_settings=dict(help_option_names=[]))
 @click.pass_context
 def main(ctx):
     """CLI - Manage your agent instance."""

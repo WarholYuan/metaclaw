@@ -72,7 +72,7 @@ def _check_auth():
     """Return True if request is authenticated or password not enabled."""
     if not _is_password_enabled():
         return True
-    return _verify_auth_token(web.cookies().get("cow_auth_token", ""))
+    return _verify_auth_token(web.cookies().get("metaclaw_auth_token", ""))
 
 
 def _require_auth():
@@ -664,7 +664,7 @@ class AuthLoginHandler:
             logger.warning("[WebChannel] Invalid login attempt")
             return json.dumps({"status": "error", "message": "Wrong password"})
         token = _create_auth_token()
-        web.setcookie("cow_auth_token", token, expires=_session_expire_seconds(),
+        web.setcookie("metaclaw_auth_token", token, expires=_session_expire_seconds(),
                        path="/", httponly=True, samesite="Lax")
         return json.dumps({"status": "success"})
 
@@ -672,7 +672,7 @@ class AuthLoginHandler:
 class AuthLogoutHandler:
     def POST(self):
         web.header('Content-Type', 'application/json; charset=utf-8')
-        web.setcookie("cow_auth_token", "", expires=-1, path="/")
+        web.setcookie("metaclaw_auth_token", "", expires=-1, path="/")
         return json.dumps({"status": "success"})
 
 

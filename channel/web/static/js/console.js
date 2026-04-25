@@ -185,7 +185,7 @@ const I18N = {
     }
 };
 
-let currentLang = localStorage.getItem('cow_lang') || 'zh';
+let currentLang = localStorage.getItem('metaclaw_lang') || 'zh';
 
 function t(key) {
     return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key]) || key;
@@ -210,7 +210,7 @@ function applyI18n() {
 
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
-    localStorage.setItem('cow_lang', currentLang);
+    localStorage.setItem('metaclaw_lang', currentLang);
     applyI18n();
     _applyInputTooltips();
 }
@@ -218,7 +218,7 @@ function toggleLanguage() {
 // =====================================================================
 // Theme
 // =====================================================================
-let currentTheme = localStorage.getItem('cow_theme') || 'dark';
+let currentTheme = localStorage.getItem('metaclaw_theme') || 'dark';
 
 function applyTheme() {
     const root = document.documentElement;
@@ -461,7 +461,7 @@ let activeStreams = {};   // request_id -> EventSource
 let isComposing = false;
 let appConfig = { use_agent: false, title: 'AI Agent', subtitle: '', providers: {}, api_bases: {} };
 
-const SESSION_ID_KEY = 'cow_session_id';
+const SESSION_ID_KEY = 'metaclaw_session_id';
 
 function generateSessionId() {
     return 'session_' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
@@ -1826,7 +1826,7 @@ function newChat() {
 // Session Panel
 // =====================================================================
 
-const SESSION_PANEL_KEY = 'cow_session_panel_open';
+const SESSION_PANEL_KEY = 'metaclaw_session_panel_open';
 let sessionPanelOpen = localStorage.getItem(SESSION_PANEL_KEY) === '1';
 
 function _persistPanelState() {

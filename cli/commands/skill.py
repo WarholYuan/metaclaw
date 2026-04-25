@@ -326,7 +326,7 @@ def _install_local(path: str, result: InstallResult):
     _batch_install_skills(discovered, path, skills_dir, "local", result)
 
 
-def _register_installed_skill(name: str, source: str = "cowhub", display_name: str = ""):
+def _register_installed_skill(name: str, source: str = "metaclaw", display_name: str = ""):
     """Register a newly installed skill into skills_config.json.
 
     source values: builtin, metaclaw, github, clawhub, linkai, local, url
@@ -1042,9 +1042,9 @@ def _install_hub(name, result: InstallResult, provider=None):
             expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
             _check_checksum(mirror_resp.content, expected_checksum)
             installed_before = len(result.installed)
-            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub", display_name=hub_display_name)
+            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="metaclaw", display_name=hub_display_name)
             if len(result.installed) == installed_before:
-                _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
+                _register_installed_skill(name, source="metaclaw", display_name=hub_display_name)
                 result.installed.append(name)
                 result.messages.append(f"Installed '{name}' from mirror.")
             return
@@ -1105,9 +1105,9 @@ def _install_hub(name, result: InstallResult, provider=None):
                 expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
                 _check_checksum(mirror_resp.content, expected_checksum)
                 installed_before = len(result.installed)
-                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub", display_name=hub_display_name)
+                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="metaclaw", display_name=hub_display_name)
                 if len(result.installed) == installed_before:
-                    _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
+                    _register_installed_skill(name, source="metaclaw", display_name=hub_display_name)
                     result.installed.append(name)
                     result.messages.append(f"Installed '{name}' from mirror.")
             else:
@@ -1132,7 +1132,7 @@ def _install_hub(name, result: InstallResult, provider=None):
         expected_checksum = resp.headers.get("X-Checksum-Sha256")
         _check_checksum(resp.content, expected_checksum)
         installed_before = len(result.installed)
-        _install_zip_bytes(resp.content, name, skills_dir, result=result, source_label="cowhub")
+        _install_zip_bytes(resp.content, name, skills_dir, result=result, source_label="metaclaw")
         if len(result.installed) == installed_before:
             _register_installed_skill(name)
             result.installed.append(name)

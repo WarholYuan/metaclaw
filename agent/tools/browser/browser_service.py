@@ -203,7 +203,7 @@ _SNAPSHOT_JS = """
     }
 
     const result = walk(document.body);
-    window.__cowRefMap = refMap;
+    window.__metaclawRefMap = refMap;
     return { tree: result, refCount: refCounter };
 }
 """ % (
@@ -577,7 +577,7 @@ class BrowserService:
             if ref is not None:
                 result = page.evaluate(f"""
                     () => {{
-                        const el = window.__cowRefMap && window.__cowRefMap[{ref}];
+                        const el = window.__metaclawRefMap && window.__metaclawRefMap[{ref}];
                         if (!el) return {{ error: "ref {ref} not found. Run snapshot first." }};
                         el.click();
                         return {{ clicked: true, tag: el.tagName.toLowerCase() }};
@@ -605,7 +605,7 @@ class BrowserService:
             if ref is not None:
                 result = page.evaluate(f"""
                     () => {{
-                        const el = window.__cowRefMap && window.__cowRefMap[{ref}];
+                        const el = window.__metaclawRefMap && window.__metaclawRefMap[{ref}];
                         if (!el) return {{ error: "ref {ref} not found. Run snapshot first." }};
                         el.focus();
                         el.value = "";
@@ -634,7 +634,7 @@ class BrowserService:
             if ref is not None:
                 result = page.evaluate(f"""
                     () => {{
-                        const el = window.__cowRefMap && window.__cowRefMap[{ref}];
+                        const el = window.__metaclawRefMap && window.__metaclawRefMap[{ref}];
                         if (!el || el.tagName.toLowerCase() !== "select")
                             return {{ error: "ref {ref} is not a <select> element" }};
                         el.value = {repr(value)};

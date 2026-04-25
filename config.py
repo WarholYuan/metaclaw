@@ -374,12 +374,11 @@ def load_config():
     global config
 
     # 打印 ASCII Logo
-    logger.info("  ____                _                    _   ")
-    logger.info(" / ___|_____      __ / \\   __ _  ___ _ __ | |_ ")
-    logger.info("| |   / _ \\ \\ /\\ / // _ \\ / _` |/ _ \\ '_ \\| __|")
-    logger.info("| |__| (_) \\ V  V // ___ \\ (_| |  __/ | | | |_ ")
-    logger.info(" \\____\\___/ \\_/\\_//_/   \\_\\__, |\\___|_| |_|\\__|")
-    logger.info("                          |___/                 ")
+    logger.info(" __  __      _        ____ _                 ")
+    logger.info("|  \\/  | ___| |_ __ _/ ___| | __ ___      __")
+    logger.info("| |\\/| |/ _ \\ __/ _` | |   | |/ _` \\ \\ /\\ / /")
+    logger.info("| |  | |  __/ || (_| | |___| | (_| |\\ V  V / ")
+    logger.info("|_|  |_|\\___|\\__\\__,_|\\____|_|\\__,_| \\_/\\_/  ")
     logger.info("")
     config_path = "./config.json"
     if not os.path.exists(config_path):

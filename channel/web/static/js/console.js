@@ -262,6 +262,8 @@ function navigateTo(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const target = document.getElementById('view-' + viewId);
     if (target) target.classList.add('active');
+    document.body.dataset.view = viewId;
+    document.body.classList.toggle('view-chat', viewId === 'chat');
     document.querySelectorAll('.sidebar-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewId);
     });
@@ -271,6 +273,11 @@ function navigateTo(viewId) {
     document.getElementById('breadcrumb-page').textContent = t(meta.page);
     document.getElementById('breadcrumb-page').dataset.i18n = meta.page;
     currentView = viewId;
+    if (viewId === 'chat' && document.getElementById('welcome-screen')) {
+        document.body.classList.add('empty-chat');
+    } else if (viewId !== 'chat') {
+        document.body.classList.remove('empty-chat');
+    }
     if (window.innerWidth < 1024) closeSidebar();
 }
 
@@ -1611,7 +1618,12 @@ function loadHistory(page) {
     fetch(`/api/history?session_id=${encodeURIComponent(sessionId)}&page=${page}&page_size=20`)
         .then(r => r.json())
         .then(data => {
-            if (data.status !== 'success' || data.messages.length === 0) return;
+            if (data.status !== 'success' || data.messages.length === 0) {
+                if (page === 1 && currentView === 'chat' && document.getElementById('welcome-screen')) {
+                    document.body.classList.add('empty-chat');
+                }
+                return;
+            }
 
             const prevScrollHeight = messagesDiv.scrollHeight;
             const isFirstLoad = page === 1;
@@ -1852,7 +1864,7 @@ function _hideSessionOverlay() {
 
 function closeSessionPanel() {
     const panel = document.getElementById('session-panel');
-    if (!panel || !sessionPanelOpen) return;
+    if (!panel) return;
     sessionPanelOpen = false;
     panel.classList.add('hidden');
     _hideSessionOverlay();
@@ -1862,6 +1874,9 @@ function closeSessionPanel() {
 function toggleSessionPanel() {
     const panel = document.getElementById('session-panel');
     if (!panel) return;
+    if (currentView !== 'chat') {
+        navigateTo('chat');
+    }
     sessionPanelOpen = !sessionPanelOpen;
     panel.classList.toggle('hidden', !sessionPanelOpen);
     if (sessionPanelOpen) {
@@ -1886,13 +1901,15 @@ function openSessionPanel() {
 function _restoreSessionPanel() {
     const panel = document.getElementById('session-panel');
     if (!panel) return;
-    if (sessionPanelOpen && !_isMobileView()) {
+    if (currentView === 'chat' && sessionPanelOpen && !_isMobileView()) {
         panel.classList.remove('hidden');
         _showSessionOverlay();
         loadSessionList();
     } else {
+        sessionPanelOpen = false;
         panel.classList.add('hidden');
         _hideSessionOverlay();
+        _persistPanelState();
     }
 }
 
@@ -3740,6 +3757,14 @@ navigateTo = function(viewId) {
     if (currentView === 'logs' && viewId !== 'logs') stopLogStream();
 
     _origNavigateTo(viewId);
+    if (viewId !== 'chat') {
+        closeSessionPanel();
+    }
+    if (viewId !== 'chat') {
+        document.body.classList.remove('empty-chat');
+    } else if (document.getElementById('welcome-screen')) {
+        document.body.classList.add('empty-chat');
+    }
 
     // Lazy-load view data
     if (viewId === 'config') loadConfigView();
@@ -4326,9 +4351,9 @@ function initApp() {
 
     fetch('/api/version').then(r => r.json()).then(data => {
         APP_VERSION = `v${data.version}`;
-        document.getElementById('sidebar-version').innerHTML = '<i class="fas fa-gear"></i><span>设置</span>';
+        document.getElementById('sidebar-version').textContent = `${appConfig.title || 'MetaClaw'} ${APP_VERSION}`;
     }).catch(() => {
-        document.getElementById('sidebar-version').innerHTML = '<i class="fas fa-gear"></i><span>设置</span>';
+        document.getElementById('sidebar-version').textContent = appConfig.title || 'MetaClaw';
     });
     chatInput.focus();
 }

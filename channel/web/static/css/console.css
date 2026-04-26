@@ -504,6 +504,111 @@ body {
     }
 }
 
+/* Session history should overlay the workspace instead of resizing it. */
+#app {
+    position: relative !important;
+}
+
+.session-panel {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 268px !important;
+    z-index: 46 !important;
+    width: 314px !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: rgba(239, 239, 238, 0.96) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: 14px 0 30px rgba(0, 0, 0, 0.055) !important;
+    backdrop-filter: blur(18px) !important;
+}
+
+.session-panel.hidden {
+    display: none !important;
+}
+
+.session-panel-header {
+    height: 58px !important;
+    padding: 0 18px !important;
+}
+
+.session-panel-title {
+    font-size: 16px !important;
+    font-weight: 650 !important;
+}
+
+.session-panel-new {
+    min-height: 48px !important;
+    margin: 10px 16px 14px !important;
+    padding: 0 16px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+}
+
+.session-item {
+    min-height: 46px !important;
+    padding: 10px 14px !important;
+    margin: 3px 8px !important;
+    border-radius: 10px !important;
+    font-size: 14px !important;
+}
+
+.session-group-label {
+    padding: 12px 14px 6px !important;
+    font-size: 13px !important;
+    text-transform: none !important;
+    color: #9aa0a6 !important;
+}
+
+.session-panel-overlay {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 45 !important;
+    background: transparent !important;
+}
+
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+@media (max-width: 1023px) {
+    .session-panel {
+        left: 0 !important;
+        width: min(86vw, 314px) !important;
+    }
+
+    .session-panel-overlay {
+        background: rgba(0, 0, 0, 0.18) !important;
+    }
+}
+
+.sidebar-version-link {
+    display: block !important;
+    min-height: auto !important;
+    padding: 8px 8px !important;
+    border-radius: 6px !important;
+    color: #8a8d90 !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    font-weight: 500 !important;
+}
+
+.sidebar-version-link:hover {
+    color: #4f5357 !important;
+    background: rgba(255, 255, 255, 0.36) !important;
+}
+
+.sidebar-version-link:focus-visible {
+    outline: 2px solid rgba(32, 33, 35, 0.22) !important;
+    outline-offset: 2px !important;
+}
+
+.sidebar-settings-link {
+    display: none !important;
+}
+
 /* =====================================================================
    Codex App Match
    This final layer mirrors the supplied Codex desktop screenshot.
@@ -858,6 +963,267 @@ body:not(.empty-chat) .chat-composer {
     .empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
         display: none;
     }
+}
+
+/* Chat scrolling: normal conversations use one stable scroll container. */
+#view-chat {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body:not(.empty-chat) #chat-messages {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 14px 0 20px !important;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+body:not(.empty-chat) .chat-composer {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    z-index: 10 !important;
+    flex: 0 0 auto !important;
+    padding: 12px 18px 16px !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+}
+
+body:not(.empty-chat) .chat-composer > div {
+    max-width: 860px !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    min-height: 52px !important;
+    padding: 8px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.055) !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative::before,
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.flex-shrink-0 {
+    width: auto !important;
+    gap: 2px !important;
+}
+
+body:not(.empty-chat) .chat-composer button:not(#send-btn) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    font-size: 15px !important;
+}
+
+body:not(.empty-chat) #chat-input {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 160px !important;
+    padding: 8px 6px !important;
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+    overflow-y: auto !important;
+}
+
+body:not(.empty-chat) #send-btn {
+    position: static !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+}
+
+body:not(.empty-chat) #scroll-to-bottom-btn {
+    bottom: 86px !important;
+}
+
+@media (max-width: 768px) {
+    body:not(.empty-chat) .chat-composer {
+        padding: 10px 10px 12px !important;
+    }
+
+    body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative {
+        gap: 4px !important;
+        padding: 7px !important;
+    }
+
+    body:not(.empty-chat) .chat-composer button:not(#send-btn) {
+        width: 32px !important;
+        min-width: 32px !important;
+    }
+
+    body:not(.empty-chat) #chat-input {
+        font-size: 16px !important;
+    }
+}
+
+/* Absolute final overrides for current view state. */
+body:not(.view-chat) .session-panel,
+body:not(.view-chat) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body.view-chat .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+body:not(.view-chat) #view-config > .flex-1,
+body:not(.view-chat) #view-skills > .flex-1,
+body:not(.view-chat) #view-memory > .flex-1,
+body:not(.view-chat) #view-knowledge > .flex-1,
+body:not(.view-chat) #view-channels > .flex-1,
+body:not(.view-chat) #view-tasks > .flex-1,
+body:not(.view-chat) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+}
+
+body:not(.view-chat) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* View visibility must win over layout helpers. */
+.view:not(.active) {
+    display: none !important;
+}
+
+.view.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#view-chat:not(.active) {
+    display: none !important;
+}
+
+#view-chat.active {
+    display: flex !important;
+}
+
+#view-chat:not(.active) .chat-composer,
+#view-chat:not(.active) #welcome-screen,
+#view-chat:not(.active) #chat-messages {
+    display: none !important;
+}
+
+body.empty-chat #view-chat:not(.active) .chat-composer,
+body.empty-chat #view-chat:not(.active) #welcome-screen {
+    display: none !important;
+}
+
+/* Final welcome placement: keep the title visible and composer centered. */
+body.empty-chat #view-chat.active {
+    position: relative !important;
+}
+
+body.empty-chat #chat-messages {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body.empty-chat #welcome-screen {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: clamp(120px, 18vh, 190px) 24px 0 !important;
+    transform: none !important;
+    pointer-events: none;
+}
+
+body.empty-chat #welcome-title {
+    display: block !important;
+    margin: 0 auto !important;
+    max-width: min(900px, calc(100vw - 360px)) !important;
+    text-align: center !important;
+    font-size: clamp(36px, 3.4vw, 56px) !important;
+    line-height: 1.14 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+}
+
+body.empty-chat .chat-composer {
+    top: clamp(360px, 49vh, 520px) !important;
+    transform: translateY(-50%) !important;
+}
+
+@media (max-width: 900px) {
+    body.empty-chat #welcome-screen {
+        padding-top: 96px !important;
+    }
+
+    body.empty-chat #welcome-title {
+        max-width: calc(100vw - 36px) !important;
+        font-size: 32px !important;
+    }
+
+    body.empty-chat .chat-composer {
+        top: 330px !important;
+    }
+}
+
+/* Final page-state guardrails. */
+body:not(.view-chat) .session-panel,
+body:not(.view-chat) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body.view-chat .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+body:not(.view-chat) #view-config > .flex-1,
+body:not(.view-chat) #view-skills > .flex-1,
+body:not(.view-chat) #view-memory > .flex-1,
+body:not(.view-chat) #view-knowledge > .flex-1,
+body:not(.view-chat) #view-channels > .flex-1,
+body:not(.view-chat) #view-tasks > .flex-1,
+body:not(.view-chat) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+}
+
+body:not(.view-chat) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Skills and logs refinements. */
@@ -3364,5 +3730,169 @@ a[role="button"],
         min-width: 36px;
         height: 36px !important;
         min-height: 36px;
+    }
+}
+
+/* =====================================================================
+   FINAL SCROLL FIX
+   Keep this block at the end. Earlier theme layers redefine composer and
+   mobile button positioning; this restores stable scrolling behavior.
+   ===================================================================== */
+
+html,
+body,
+#app,
+#main-content,
+#content-area,
+.view,
+.view.active {
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+#app,
+#main-content,
+#content-area,
+.view.active {
+    overflow: hidden !important;
+}
+
+#main-content,
+#content-area,
+#view-chat {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#content-area,
+#view-chat,
+#chat-messages,
+#view-config > .flex-1,
+#view-skills > .flex-1,
+#view-memory > .flex-1,
+#view-knowledge > .flex-1,
+#view-channels > .flex-1,
+#view-tasks > .flex-1,
+#view-logs > .flex-1 {
+    min-height: 0 !important;
+}
+
+body:not(.empty-chat) #chat-messages {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 14px 0 20px !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+body:not(.empty-chat) .chat-composer {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    flex: 0 0 auto !important;
+    z-index: 10 !important;
+    padding: 12px 18px 16px !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: none !important;
+}
+
+body:not(.empty-chat) .chat-composer > div {
+    max-width: 860px !important;
+    width: 100% !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    min-height: 52px !important;
+    padding: 8px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.055) !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative::before,
+body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+}
+
+body:not(.empty-chat) .chat-composer .flex.items-center.flex-shrink-0 {
+    width: auto !important;
+    flex-shrink: 0 !important;
+    gap: 2px !important;
+}
+
+body:not(.empty-chat) .chat-composer button:not(#send-btn) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    font-size: 15px !important;
+}
+
+body:not(.empty-chat) #chat-input {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 160px !important;
+    padding: 8px 6px !important;
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+    overflow-y: auto !important;
+}
+
+body:not(.empty-chat) #send-btn {
+    position: static !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+}
+
+body:not(.empty-chat) #scroll-to-bottom-btn {
+    bottom: 86px !important;
+}
+
+#view-config > .flex-1,
+#view-skills > .flex-1,
+#view-memory > .flex-1,
+#view-knowledge > .flex-1,
+#view-channels > .flex-1,
+#view-tasks > .flex-1,
+#view-logs > .flex-1 {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 768px) {
+    body:not(.empty-chat) .chat-composer {
+        padding: 10px 10px 12px !important;
+    }
+
+    body:not(.empty-chat) .chat-composer .flex.items-center.gap-2.relative {
+        gap: 4px !important;
+        padding: 7px !important;
+    }
+
+    body:not(.empty-chat) .chat-composer button:not(#send-btn) {
+        width: 32px !important;
+        min-width: 32px !important;
+    }
+
+    body:not(.empty-chat) #chat-input {
+        font-size: 16px !important;
     }
 }

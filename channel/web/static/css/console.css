@@ -1077,6 +1077,422 @@ body:not(.empty-chat) #scroll-to-bottom-btn {
     }
 }
 
+/* =====================================================================
+   CASCADE GUARD EOF
+   The rules below intentionally sit after the final scroll block.
+   ===================================================================== */
+
+body[data-view]:not([data-view="chat"]) #view-chat,
+body[data-view]:not([data-view="chat"]) #view-chat *,
+.view:not(.active) {
+    display: none !important;
+}
+
+.view.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-view="chat"] #view-chat.active {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) .session-panel,
+body[data-view]:not([data-view="chat"]) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body[data-view="chat"] .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) #view-config > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-skills > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-memory > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-knowledge > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-channels > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-tasks > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
+body[data-view]:not([data-view="chat"]) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* =====================================================================
+   SESSION PANEL RESPONSIVE FIX - TRUE EOF
+   Desktop reserves space; smaller viewports use a drawer.
+   ===================================================================== */
+
+@media (min-width: 1024px) {
+    #sidebar {
+        width: clamp(220px, 17vw, 248px) !important;
+        flex: 0 0 clamp(220px, 17vw, 248px) !important;
+        max-width: 248px !important;
+    }
+
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: relative !important;
+        inset: auto !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        display: flex !important;
+        width: clamp(220px, 18vw, 300px) !important;
+        min-width: 220px !important;
+        max-width: 300px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 20 !important;
+        flex: 0 0 clamp(220px, 18vw, 300px) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: none !important;
+    }
+
+    #main-content {
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        display: flex !important;
+        width: min(86vw, 320px) !important;
+        max-width: calc(100vw - 28px) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 70 !important;
+        box-shadow: 18px 0 42px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 60 !important;
+        background: rgba(0, 0, 0, 0.22) !important;
+    }
+}
+
+/* Keep active conversations clear of the top header and bottom composer. */
+body[data-view="chat"]:not(.empty-chat) #view-chat {
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body[data-view="chat"]:not(.empty-chat) #chat-messages {
+    padding-top: clamp(56px, 7vh, 96px) !important;
+    padding-bottom: 132px !important;
+    scroll-padding-top: 80px !important;
+    scroll-padding-bottom: 140px !important;
+}
+
+@media (max-height: 760px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 36px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 28px !important;
+        padding-bottom: 116px !important;
+    }
+}
+
+/* Keep active conversations clear of the top header and bottom composer. */
+body[data-view="chat"]:not(.empty-chat) #view-chat {
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body[data-view="chat"]:not(.empty-chat) #chat-messages {
+    padding-top: clamp(56px, 7vh, 96px) !important;
+    padding-bottom: 132px !important;
+    scroll-padding-top: 80px !important;
+    scroll-padding-bottom: 140px !important;
+}
+
+@media (max-height: 760px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 36px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 28px !important;
+        padding-bottom: 116px !important;
+    }
+}
+
+/* Keep active conversations clear of the top header and bottom composer. */
+body[data-view="chat"]:not(.empty-chat) #view-chat {
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body[data-view="chat"]:not(.empty-chat) #chat-messages {
+    padding-top: clamp(56px, 7vh, 96px) !important;
+    padding-bottom: 132px !important;
+    scroll-padding-top: 80px !important;
+    scroll-padding-bottom: 140px !important;
+}
+
+@media (max-height: 760px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 36px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 28px !important;
+        padding-bottom: 116px !important;
+    }
+}
+
+/* =====================================================================
+   SESSION PANEL RESPONSIVE FIX
+   Desktop: reserve layout space beside the sidebar.
+   Tablet/mobile: use an overlay drawer.
+   ===================================================================== */
+
+@media (min-width: 1024px) {
+    #sidebar {
+        width: clamp(220px, 17vw, 248px) !important;
+        flex: 0 0 clamp(220px, 17vw, 248px) !important;
+        max-width: 248px !important;
+    }
+
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: relative !important;
+        inset: auto !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        display: flex !important;
+        width: clamp(220px, 18vw, 300px) !important;
+        min-width: 220px !important;
+        max-width: 300px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 20 !important;
+        flex: 0 0 clamp(220px, 18vw, 300px) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: none !important;
+    }
+
+    #main-content {
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        display: flex !important;
+        width: min(86vw, 320px) !important;
+        max-width: calc(100vw - 28px) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 70 !important;
+        box-shadow: 18px 0 42px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 60 !important;
+        background: rgba(0, 0, 0, 0.22) !important;
+    }
+}
+
+/* =====================================================================
+   EOF HARD FINAL UI INVARIANTS
+   Do not move this block upward. It intentionally wins the cascade.
+   ===================================================================== */
+
+body[data-view]:not([data-view="chat"]) #view-chat,
+body[data-view]:not([data-view="chat"]) #view-chat *,
+.view:not(.active) {
+    display: none !important;
+}
+
+.view.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-view="chat"] #view-chat.active {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) .session-panel,
+body[data-view]:not([data-view="chat"]) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body[data-view="chat"] .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) #view-config > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-skills > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-memory > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-knowledge > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-channels > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-tasks > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
+body[data-view]:not([data-view="chat"]) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+html,
+body,
+#app,
+#main-content,
+#content-area,
+.view.active {
+    min-height: 0 !important;
+}
+
+#app,
+#main-content,
+#content-area {
+    overflow: hidden !important;
+}
+
+body:not(.empty-chat) #chat-messages {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
+/* =====================================================================
+   HARD FINAL UI INVARIANTS
+   This block must stay at EOF. It prevents the layered theme rules above
+   from breaking routing, panel visibility, and scroll containers.
+   ===================================================================== */
+
+body[data-view]:not([data-view="chat"]) #view-chat,
+body[data-view]:not([data-view="chat"]) #view-chat *,
+.view:not(.active) {
+    display: none !important;
+}
+
+.view.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-view="chat"] #view-chat.active {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) .session-panel,
+body[data-view]:not([data-view="chat"]) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body[data-view="chat"] .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) #view-config > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-skills > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-memory > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-knowledge > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-channels > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-tasks > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
+body[data-view]:not([data-view="chat"]) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+html,
+body,
+#app,
+#main-content,
+#content-area,
+.view.active {
+    min-height: 0 !important;
+}
+
+#app,
+#main-content,
+#content-area {
+    overflow: hidden !important;
+}
+
+body:not(.empty-chat) #chat-messages {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
 /* Absolute final overrides for current view state. */
 body:not(.view-chat) .session-panel,
 body:not(.view-chat) .session-panel-overlay,
@@ -3735,7 +4151,7 @@ a[role="button"],
 
 /* =====================================================================
    FINAL SCROLL FIX
-   Keep this block at the end. Earlier theme layers redefine composer and
+   Keep this block near EOF. Earlier theme layers redefine composer and
    mobile button positioning; this restores stable scrolling behavior.
    ===================================================================== */
 
@@ -3894,5 +4310,151 @@ body:not(.empty-chat) #scroll-to-bottom-btn {
 
     body:not(.empty-chat) #chat-input {
         font-size: 16px !important;
+    }
+}
+
+/* =====================================================================
+   TRUE EOF CASCADE GUARD
+   These rules intentionally come after FINAL SCROLL FIX.
+   ===================================================================== */
+
+body[data-view]:not([data-view="chat"]) #view-chat,
+body[data-view]:not([data-view="chat"]) #view-chat *,
+.view:not(.active) {
+    display: none !important;
+}
+
+.view.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-view="chat"] #view-chat.active {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) .session-panel,
+body[data-view]:not([data-view="chat"]) .session-panel-overlay,
+.session-panel.hidden,
+.session-panel-overlay.hidden {
+    display: none !important;
+}
+
+body[data-view="chat"] .session-panel:not(.hidden) {
+    display: flex !important;
+}
+
+body[data-view]:not([data-view="chat"]) #view-config > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-skills > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-memory > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-knowledge > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-channels > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-tasks > .flex-1,
+body[data-view]:not([data-view="chat"]) #view-logs > .flex-1 {
+    padding-top: 76px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+}
+
+body[data-view]:not([data-view="chat"]) .app-header {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.empty-chat .chat-composer .flex.items-center.gap-2.relative::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* =====================================================================
+   SESSION PANEL RESPONSIVE FIX - TRUE EOF
+   Desktop reserves space; smaller viewports use a drawer.
+   ===================================================================== */
+
+@media (min-width: 1024px) {
+    #sidebar {
+        width: clamp(220px, 17vw, 248px) !important;
+        flex: 0 0 clamp(220px, 17vw, 248px) !important;
+        max-width: 248px !important;
+    }
+
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: relative !important;
+        inset: auto !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        display: flex !important;
+        width: clamp(220px, 18vw, 300px) !important;
+        min-width: 220px !important;
+        max-width: 300px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 20 !important;
+        flex: 0 0 clamp(220px, 18vw, 300px) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: none !important;
+    }
+
+    #main-content {
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    body[data-view="chat"] .session-panel:not(.hidden) {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        display: flex !important;
+        width: min(86vw, 320px) !important;
+        max-width: calc(100vw - 28px) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 70 !important;
+        box-shadow: 18px 0 42px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    body[data-view="chat"] .session-panel-overlay:not(.hidden) {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 60 !important;
+        background: rgba(0, 0, 0, 0.22) !important;
+    }
+}
+
+/* Keep active conversations clear of the top header and bottom composer. */
+body[data-view="chat"]:not(.empty-chat) #view-chat {
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body[data-view="chat"]:not(.empty-chat) #chat-messages {
+    padding-top: clamp(56px, 7vh, 96px) !important;
+    padding-bottom: 132px !important;
+    scroll-padding-top: 80px !important;
+    scroll-padding-bottom: 140px !important;
+}
+
+@media (max-height: 760px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 36px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    body[data-view="chat"]:not(.empty-chat) #chat-messages {
+        padding-top: 28px !important;
+        padding-bottom: 116px !important;
     }
 }

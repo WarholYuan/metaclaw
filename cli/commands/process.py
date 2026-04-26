@@ -181,7 +181,7 @@ def update(ctx, version, force):
     """Update and restart agent service.
 
     VERSION is optional. If provided, update to that Git tag, for example:
-    metaclaw update 2.0.9
+    metaclaw update 2.0.10
     """
     root = get_project_root()
 

@@ -257,6 +257,22 @@ const VIEW_META = {
 
 let currentView = 'chat';
 
+function chatHasRenderedMessages() {
+    const container = document.getElementById('chat-messages');
+    if (!container) return false;
+    return Array.from(container.children).some(child => {
+        if (child.id === 'welcome-screen' || child.id === 'history-load-more') return false;
+        return !!(child.textContent.trim() || child.querySelector('img, video, audio, .msg-content, .answer-content'));
+    });
+}
+
+function syncChatEmptyState() {
+    const hasMessages = chatHasRenderedMessages();
+    const welcome = document.getElementById('welcome-screen');
+    document.body.classList.toggle('empty-chat', !hasMessages && !!welcome);
+    if (hasMessages && welcome) welcome.remove();
+}
+
 function navigateTo(viewId) {
     if (!VIEW_META[viewId]) return;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -273,10 +289,11 @@ function navigateTo(viewId) {
     document.getElementById('breadcrumb-page').textContent = t(meta.page);
     document.getElementById('breadcrumb-page').dataset.i18n = meta.page;
     currentView = viewId;
-    if (viewId === 'chat' && document.getElementById('welcome-screen')) {
-        document.body.classList.add('empty-chat');
+    if (viewId === 'chat') {
+        syncChatEmptyState();
     } else if (viewId !== 'chat') {
         document.body.classList.remove('empty-chat');
+        closeSessionPanel();
     }
     if (window.innerWidth < 1024) closeSidebar();
 }
@@ -1848,7 +1865,7 @@ function _persistPanelState() {
 }
 
 function _isMobileView() {
-    return window.innerWidth <= 768;
+    return window.innerWidth < 1024;
 }
 
 function _showSessionOverlay() {
@@ -3762,8 +3779,8 @@ navigateTo = function(viewId) {
     }
     if (viewId !== 'chat') {
         document.body.classList.remove('empty-chat');
-    } else if (document.getElementById('welcome-screen')) {
-        document.body.classList.add('empty-chat');
+    } else {
+        syncChatEmptyState();
     }
 
     // Lazy-load view data
@@ -4338,6 +4355,11 @@ window.fetch = function(...args) {
 };
 
 function initApp() {
+    document.body.dataset.view = currentView;
+    document.body.classList.toggle('view-chat', currentView === 'chat');
+    if (currentView === 'chat' && document.getElementById('welcome-screen')) {
+        document.body.classList.add('empty-chat');
+    }
     applyI18n();
     _applyInputTooltips();
     _restoreSessionPanel();

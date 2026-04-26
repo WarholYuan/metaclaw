@@ -639,14 +639,14 @@ start_project() {
         echo -e "  ${GREEN}metaclaw restart${NC}    Restart the service"
         echo -e "  ${GREEN}metaclaw status${NC}     Check status"
         echo -e "  ${GREEN}metaclaw logs${NC}       View logs"
-        echo -e "  ${GREEN}metaclaw update 2.0.9${NC}  Update to a version and restart"
+        echo -e "  ${GREEN}metaclaw update 2.0.10${NC}  Update to a version and restart"
         echo -e "  ${GREEN}metaclaw install-browser${NC}  Install browser tool"
     else
         echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
         echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
         echo -e "  ${GREEN}./run.sh status${NC}     Check status"
         echo -e "  ${GREEN}./run.sh logs${NC}       View logs"
-        echo -e "  ${GREEN}./run.sh update 2.0.9${NC}  Update to a version and restart"
+        echo -e "  ${GREEN}./run.sh update 2.0.10${NC}  Update to a version and restart"
     fi
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo ""
@@ -679,7 +679,7 @@ show_usage() {
     echo -e "  ${GREEN}./run.sh start${NC}"
     echo -e "  ${GREEN}./run.sh logs${NC}"
     echo -e "  ${GREEN}./run.sh status${NC}"
-    echo -e "  ${GREEN}./run.sh update 2.0.9${NC}"
+    echo -e "  ${GREEN}./run.sh update 2.0.10${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
 }
 
@@ -875,7 +875,7 @@ cmd_update() {
         dirty_files=$(git status --porcelain)
         if [ -n "$dirty_files" ] && [ "$force_update" = false ]; then
             echo -e "${RED}❌ Local source files have changes. Update aborted.${NC}"
-            echo -e "${YELLOW}Run 'git status' here, or use './run.sh update ${target_version:-2.0.9} --force' if you know what you are doing.${NC}"
+            echo -e "${YELLOW}Run 'git status' here, or use './run.sh update ${target_version:-2.0.10} --force' if you know what you are doing.${NC}"
             exit 1
         fi
 

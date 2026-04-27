@@ -22,7 +22,6 @@ from cli.utils import (
     get_skills_dir,
     get_builtin_skills_dir,
     load_skills_config,
-    SKILL_HUB_API,
 )
 
 
@@ -629,14 +628,9 @@ def skill():
 # skill list
 # ------------------------------------------------------------------
 @skill.command("list")
-@click.option("--remote", is_flag=True, help="Browse skills on Skill Hub")
-@click.option("--page", default=1, type=int, help="Page number for remote listing")
-def skill_list(remote, page):
-    """List installed skills or browse Skill Hub."""
-    if remote:
-        _list_remote(page=page)
-    else:
-        _list_local()
+def skill_list():
+    """List installed skills."""
+    _list_local()
 
 
 def _list_local():
@@ -723,109 +717,14 @@ def _print_skill_table(entries):
     click.echo()
 
 
-_REMOTE_PAGE_SIZE = 10
-
-
-def _list_remote(page: int = 1):
-    """List skills from remote Skill Hub with server-side pagination."""
-    try:
-        resp = requests.get(
-            f"{SKILL_HUB_API}/skills",
-            params={"page": page, "limit": _REMOTE_PAGE_SIZE},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        click.echo(f"Error: Failed to fetch from Skill Hub: {e}", err=True)
-        sys.exit(1)
-
-    skills = data.get("skills", [])
-    total = data.get("total", len(skills))
-
-    if not skills and page == 1:
-        click.echo("No skills available on Skill Hub.")
-        return
-
-    total_pages = max(1, (total + _REMOTE_PAGE_SIZE - 1) // _REMOTE_PAGE_SIZE)
-    page = min(page, total_pages)
-    installed = set(load_skills_config().keys())
-
-    name_w = max((len(s.get("name", "")) for s in skills), default=4)
-    name_w = max(name_w, 4) + 2
-
-    click.echo(f"\n  Skill Hub ({total} available) — page {page}/{total_pages}\n")
-    click.echo(f"  {'Name':<{name_w}} {'Status':<12} {'Description'}")
-    click.echo(f"  {'─' * (name_w + 12 + 50)}")
-
-    for s in skills:
-        name = s.get("name", "")
-        desc = s.get("description", "") or s.get("display_name", "")
-        if len(desc) > 50:
-            desc = desc[:47] + "..."
-        status = click.style("installed", fg="green") if name in installed else "—"
-        click.echo(f"  {name:<{name_w}} {status:<12} {desc}")
-
-    click.echo()
-    nav_parts = []
-    if page > 1:
-        nav_parts.append(f"{CLI_NAME} skill list --remote --page {page - 1}")
-    if page < total_pages:
-        nav_parts.append(f"{CLI_NAME} skill list --remote --page {page + 1}")
-    if nav_parts:
-        click.echo(f"  Navigate: {' | '.join(nav_parts)}")
-    click.echo(f"  Install:  {CLI_NAME} skill install <name>")
-    click.echo(f"  Browse:   https://skills.metaclaw.ai\n")
-
-
-# ------------------------------------------------------------------
-# skill search
-# ------------------------------------------------------------------
-@skill.command()
-@click.argument("query")
-def search(query):
-    """Search skills on Skill Hub."""
-    try:
-        resp = requests.get(f"{SKILL_HUB_API}/skills/search", params={"q": query}, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        click.echo(f"Error: Failed to search Skill Hub: {e}", err=True)
-        sys.exit(1)
-
-    skills = data.get("skills", [])
-    if not skills:
-        click.echo(f'No skills found for "{query}".')
-        return
-
-    installed = set(load_skills_config().keys())
-    name_w = max(len(s.get("name", "")) for s in skills)
-    name_w = max(name_w, 4) + 2
-
-    click.echo(f'\n  Search results for "{query}" ({len(skills)} found)\n')
-    click.echo(f"  {'Name':<{name_w}} {'Status':<12} {'Description'}")
-    click.echo(f"  {'─' * (name_w + 12 + 50)}")
-
-    for s in skills:
-        name = s.get("name", "")
-        desc = s.get("description", "") or s.get("display_name", "")
-        if len(desc) > 50:
-            desc = desc[:47] + "..."
-        status = click.style("installed", fg="green") if name in installed else "—"
-        click.echo(f"  {name:<{name_w}} {status:<12} {desc}")
-
-    click.echo(f"\n  Install with: {CLI_NAME} skill install <name>\n")
-
-
-# ------------------------------------------------------------------
 # Core install function — reusable from CLI and chat plugin
 # ------------------------------------------------------------------
 
 def install_skill(name: str) -> InstallResult:
     """Core install logic, usable from CLI and chat plugin.
 
-    Accepts all formats: Skill Hub name, owner/repo, GitHub/GitLab URL,
-    git@ SSH, local path, SKILL.md URL.
+    Accepts owner/repo, GitHub/GitLab URL, git@ SSH, local path, archive URL,
+    or SKILL.md URL.
     Returns InstallResult with installed skill names and messages.
     """
     result = InstallResult()
@@ -891,24 +790,7 @@ def _route_install(name: str, result: InstallResult):
         if re.match(r"^[a-zA-Z0-9_\-]+/[a-zA-Z0-9_.\-]+$", raw):
             _install_github(raw, result, subpath=subpath)
         else:
-            _check_skill_name(raw)
-            _install_hub(raw, result, provider="github")
-        return
-
-    # --- clawhub: prefix ---
-    if name.startswith("clawhub:"):
-        skill_name = name[8:]
-        _check_skill_name(skill_name)
-        _install_hub(skill_name, result, provider="clawhub")
-        return
-
-    # --- linkai: prefix ---
-    if name.startswith("linkai:"):
-        skill_code = name[7:]
-        # LinkAI codes can be mixed-case alphanumeric; validate loosely
-        if not re.match(r"^[a-zA-Z0-9_\-]{1,128}$", skill_code):
-            raise SkillInstallError(f"Invalid LinkAI skill code '{skill_code}'.")
-        _install_hub(skill_code, result, provider="linkai")
+            raise SkillInstallError("Invalid GitHub skill source. Use github:owner/repo or github:owner/repo#path.")
         return
 
     # --- owner/repo or owner/repo#subpath shorthand ---
@@ -920,9 +802,11 @@ def _route_install(name: str, result: InstallResult):
         _install_github(spec, result, subpath=subpath)
         return
 
-    # --- Fallback: Skill Hub by name ---
+    # --- Plain names used to resolve through the external skill marketplace. ---
     _check_skill_name(name)
-    _install_hub(name, result)
+    raise SkillInstallError(
+        "Plain skill names are not supported. Use a GitHub/GitLab URL, owner/repo, local path, or archive URL."
+    )
 
 
 # ------------------------------------------------------------------
@@ -931,15 +815,13 @@ def _route_install(name: str, result: InstallResult):
 @skill.command()
 @click.argument("name")
 def install(name):
-    """Install skill(s) from Skill Hub, GitHub, GitLab, git URL, or local path.
+    """Install skill(s) from GitHub, GitLab, git URL, local path, or archive URL.
 
     When given an owner/repo (or full URL), downloads the repo and
     auto-discovers all skills/ subdirectories containing SKILL.md,
     installing them in batch. Use a subpath to install a single skill.
 
     Examples:
-
-      metaclaw skill install pptx                          (from Skill Hub)
 
       metaclaw skill install larksuite/cli                 (GitHub shorthand, all skills)
 
@@ -961,186 +843,6 @@ def install(name):
     if result.error:
         click.echo(f"Error: {result.error}", err=True)
         sys.exit(1)
-
-
-def _install_hub(name, result: InstallResult, provider=None):
-    """Install a skill from Skill Hub."""
-    skills_dir = get_skills_dir()
-    os.makedirs(skills_dir, exist_ok=True)
-
-    result.messages.append(f"Fetching skill info for '{name}'...")
-
-    try:
-        body = {}
-        if provider:
-            body["provider"] = provider
-        resp = requests.post(
-            f"{SKILL_HUB_API}/skills/{name}/download",
-            json=body,
-            timeout=15,
-        )
-        resp.raise_for_status()
-    except requests.HTTPError as e:
-        if e.response is not None and e.response.status_code == 404:
-            raise SkillInstallError(f"Skill '{name}' not found on Skill Hub.")
-        raise SkillInstallError(f"Failed to fetch skill: {e}")
-    except SkillInstallError:
-        raise
-    except Exception as e:
-        raise SkillInstallError(f"Failed to connect to Skill Hub: {e}")
-
-    content_type = resp.headers.get("Content-Type", "")
-    hub_display_name = ""
-
-    if "application/json" in content_type:
-        data = resp.json()
-        source_type = data.get("source_type")
-        hub_display_name = data.get("display_name", "")
-
-        if source_type == "github":
-            source_url = data.get("source_url", "")
-            has_mirror = data.get("has_mirror", False)
-            gh_err = None
-
-            gh_timeout = 15 if has_mirror else 30
-            try:
-                parsed_url = _parse_github_url(source_url)
-                if parsed_url:
-                    owner, repo, branch, subpath = parsed_url
-                    _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch, timeout=gh_timeout)
-                else:
-                    _check_github_spec(source_url)
-                    _install_github(source_url, result, skill_name=name, timeout=gh_timeout)
-                if hub_display_name:
-                    _register_installed_skill(name, display_name=hub_display_name)
-                return
-            except Exception as e:
-                gh_err = e
-                if not has_mirror:
-                    raise SkillInstallError(f"GitHub download failed: {e}")
-
-            # Fallback: download mirror from Skill Hub
-            result.messages.append(f"GitHub download failed ({gh_err}), trying mirror...")
-            try:
-                mirror_resp = requests.post(
-                    f"{SKILL_HUB_API}/skills/{name}/download",
-                    json={"mirror": True},
-                    timeout=30,
-                )
-                mirror_resp.raise_for_status()
-            except Exception as e:
-                raise SkillInstallError(
-                    f"GitHub download failed ({gh_err}) and mirror also failed: {e}"
-                )
-
-            mirror_ct = mirror_resp.headers.get("Content-Type", "")
-            if "application/zip" not in mirror_ct:
-                raise SkillInstallError(
-                    f"GitHub download failed ({gh_err}) and mirror returned unexpected content."
-                )
-
-            expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
-            _check_checksum(mirror_resp.content, expected_checksum)
-            installed_before = len(result.installed)
-            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="metaclaw", display_name=hub_display_name)
-            if len(result.installed) == installed_before:
-                _register_installed_skill(name, source="metaclaw", display_name=hub_display_name)
-                result.installed.append(name)
-                result.messages.append(f"Installed '{name}' from mirror.")
-            return
-
-        if source_type == "registry":
-            download_url = data.get("download_url")
-            if download_url:
-                parsed = urlparse(download_url)
-                if parsed.scheme != "https":
-                    raise SkillInstallError("Refusing to download from non-HTTPS URL.")
-                src_provider = data.get("source_provider", "registry")
-                has_mirror = data.get("has_mirror", False)
-                expected_checksum = data.get("checksum") or data.get("sha256")
-                result.messages.append(f"Source: {src_provider}")
-                result.messages.append("Downloading skill package...")
-                dl_err = None
-                dl_timeout = 15 if has_mirror else 30
-                try:
-                    dl_resp = requests.get(
-                        download_url,
-                        timeout=(min(dl_timeout, 5), dl_timeout),
-                        allow_redirects=True,
-                    )
-                    dl_resp.raise_for_status()
-                except Exception as e:
-                    dl_err = e
-                    if not has_mirror:
-                        raise SkillInstallError(f"Failed to download from {src_provider}: {e}")
-
-                if dl_err is None:
-                    _check_checksum(dl_resp.content, expected_checksum)
-                    installed_before = len(result.installed)
-                    _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider, display_name=hub_display_name)
-                    if len(result.installed) == installed_before:
-                        _register_installed_skill(name, source=src_provider, display_name=hub_display_name)
-                        result.installed.append(name)
-                        result.messages.append(f"Installed '{name}' from {src_provider}.")
-                    return
-
-                # Fallback: download mirror from Skill Hub
-                result.messages.append(f"Direct download failed ({dl_err}), trying mirror...")
-                try:
-                    mirror_resp = requests.post(
-                        f"{SKILL_HUB_API}/skills/{name}/download",
-                        json={"mirror": True},
-                        timeout=30,
-                    )
-                    mirror_resp.raise_for_status()
-                except Exception as e:
-                    raise SkillInstallError(
-                        f"Direct download failed ({dl_err}) and mirror also failed: {e}"
-                    )
-                mirror_ct = mirror_resp.headers.get("Content-Type", "")
-                if "application/zip" not in mirror_ct:
-                    raise SkillInstallError(
-                        f"Direct download failed ({dl_err}) and mirror returned unexpected content."
-                    )
-                expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
-                _check_checksum(mirror_resp.content, expected_checksum)
-                installed_before = len(result.installed)
-                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="metaclaw", display_name=hub_display_name)
-                if len(result.installed) == installed_before:
-                    _register_installed_skill(name, source="metaclaw", display_name=hub_display_name)
-                    result.installed.append(name)
-                    result.messages.append(f"Installed '{name}' from mirror.")
-            else:
-                raise SkillInstallError("Unsupported registry provider.")
-            return
-
-        if "redirect" in data:
-            source_url = data.get("source_url", "")
-            parsed_url = _parse_github_url(source_url)
-            if parsed_url:
-                owner, repo, branch, subpath = parsed_url
-                _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch)
-            else:
-                _check_github_spec(source_url)
-                _install_github(source_url, result, skill_name=name)
-            if hub_display_name:
-                _register_installed_skill(name, display_name=hub_display_name)
-            return
-
-    elif "application/zip" in content_type:
-        result.messages.append("Downloading skill package...")
-        expected_checksum = resp.headers.get("X-Checksum-Sha256")
-        _check_checksum(resp.content, expected_checksum)
-        installed_before = len(result.installed)
-        _install_zip_bytes(resp.content, name, skills_dir, result=result, source_label="metaclaw")
-        if len(result.installed) == installed_before:
-            _register_installed_skill(name)
-            result.installed.append(name)
-            result.messages.append(f"Installed '{name}' from Skill Hub.")
-        return
-
-    raise SkillInstallError("Unexpected response from Skill Hub.")
-
 
 def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, branch="main", source="github", timeout=30):
     """Install skill(s) from a GitHub repo.

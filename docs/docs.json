@@ -60,6 +60,7 @@
                 "pages": [
                   "guide/quick-start",
                   "guide/manual-install",
+                  "guide/customer-deployment",
                   "guide/upgrade"
                 ]
               }

@@ -18,7 +18,7 @@ from channel.chat_channel import ChatChannel, check_prefix
 from channel.chat_message import ChatMessage
 from collections import OrderedDict
 from common import const
-from common.brand import APP_NAME, DEFAULT_AGENT_WORKSPACE, DEFAULT_WEIXIN_CREDENTIALS_PATH
+from common.brand import APP_NAME, DEFAULT_AGENT_WORKSPACE, DEFAULT_RUN_LOG_FILE, DEFAULT_WEIXIN_CREDENTIALS_PATH
 from common.log import logger
 from common.singleton import singleton
 from config import conf
@@ -89,6 +89,37 @@ def _get_upload_dir() -> str:
     tmp_dir = os.path.join(ws_root, "tmp")
     os.makedirs(tmp_dir, exist_ok=True)
     return tmp_dir
+
+
+def _get_log_file_path() -> str:
+    """Return the run log path used by common.log and service scripts."""
+    from common.utils import expand_path
+    from config import get_root
+
+    candidates = []
+    env_log = os.environ.get("METACLAW_RUN_LOG_FILE", "")
+    if env_log:
+        candidates.append(expand_path(env_log))
+
+    ws_root = expand_path(conf().get("agent_workspace", DEFAULT_AGENT_WORKSPACE))
+    candidates.append(os.path.join(ws_root, "logs", "run.log"))
+    candidates.append(expand_path(DEFAULT_RUN_LOG_FILE))
+    candidates.append(os.path.join(get_root(), "run.log"))
+
+    seen = set()
+    unique_candidates = []
+    for path in candidates:
+        if not path:
+            continue
+        full_path = os.path.abspath(path)
+        if full_path in seen:
+            continue
+        seen.add(full_path)
+        unique_candidates.append(full_path)
+        if os.path.isfile(full_path):
+            return full_path
+
+    return unique_candidates[0] if unique_candidates else os.path.abspath("run.log")
 
 
 def _generate_session_title(user_message: str, assistant_reply: str = "") -> str:
@@ -1802,12 +1833,15 @@ class LogsHandler:
         web.header('Cache-Control', 'no-cache')
         web.header('X-Accel-Buffering', 'no')
 
-        from config import get_root
-        log_path = os.path.join(get_root(), "run.log")
+        log_path = _get_log_file_path()
 
         def generate():
             if not os.path.isfile(log_path):
-                yield b"data: {\"type\": \"error\", \"message\": \"run.log not found\"}\n\n"
+                payload = json.dumps({
+                    "type": "error",
+                    "message": f"run.log not found: {log_path}",
+                }, ensure_ascii=False)
+                yield f"data: {payload}\n\n".encode("utf-8")
                 return
 
             # Read last 200 lines for initial display

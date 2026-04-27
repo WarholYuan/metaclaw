@@ -5,12 +5,11 @@ cd `dirname $0`/..
 export BASE_DIR=`pwd`
 echo $BASE_DIR
 
-# check the nohup.out log output file
-if [ ! -f "${BASE_DIR}/nohup.out" ]; then
-  touch "${BASE_DIR}/nohup.out"
-echo "create file  ${BASE_DIR}/nohup.out"
-fi
+WORKSPACE_DIR="${METACLAW_WORKSPACE:-$HOME/metaclaw}"
+LOG_DIR="${WORKSPACE_DIR}/logs"
+LOG_FILE="${LOG_DIR}/nohup.out"
+mkdir -p "${LOG_DIR}"
 
-nohup python3 "${BASE_DIR}/app.py" & tail -f "${BASE_DIR}/nohup.out"
+nohup python3 "${BASE_DIR}/app.py" > "${LOG_FILE}" 2>&1 & tail -f "${LOG_FILE}"
 
-echo "MetaClaw is starting, you can check ${BASE_DIR}/nohup.out"
+echo "MetaClaw is starting, you can check ${LOG_FILE}"

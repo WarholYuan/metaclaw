@@ -204,7 +204,8 @@ metaclaw install-browser
   "use_linkai": false,                                        # 是否使用 LinkAI 接口，默认关闭，设置为 true 后可对接 LinkAI 平台模型
   "web_password": "",                                         # Web 控制台访问密码，留空则不启用密码保护
   "agent": true,                                              # 是否启用 Agent 模式，启用后拥有多轮工具决策、长期记忆、Skills 能力等
-  "agent_workspace": "~/metaclaw",                                 # Agent 的工作空间路径，用于存储 memory、skills、系统设定等
+  "agent_workspace": "~/metaclaw",                            # Agent 的工作空间路径，用于存储 memory、skills、系统设定等
+  "appdata_dir": "~/metaclaw/data",                            # 运行数据目录，默认不写入程序目录
   "agent_max_context_tokens": 50000,                          # Agent 模式下最大上下文 tokens，超出将自动智能压缩处理
   "agent_max_context_turns": 20,                              # Agent 模式下最大上下文记忆轮次，一问一答为一轮，超出后智能压缩处理
   "agent_max_steps": 20,                                      # Agent 模式下单次任务的最大决策步数，超出后将停止继续调用工具
@@ -272,7 +273,8 @@ metaclaw update             # 拉取最新代码并重启
 也可以使用传统方式后台运行：
 
 ```bash
-nohup python3 app.py & tail -f nohup.out
+mkdir -p ~/metaclaw/logs
+nohup python3 app.py > ~/metaclaw/logs/nohup.out 2>&1 & tail -f ~/metaclaw/logs/nohup.out
 ```
 
 此外，项目根目录下的 `run.sh` 脚本也支持一键管理服务，包括 `./run.sh start`、`./run.sh stop`、`./run.sh restart` 等命令，执行 `./run.sh help` 可查看全部用法。

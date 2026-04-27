@@ -23,6 +23,8 @@ class PluginManager:
         self.pconf = {}
         self.current_plugin_path = None
         self.loaded = {}
+        # Support both source and PyInstaller bundled environments
+        self.plugins_dir = os.path.dirname(os.path.abspath(__file__))
 
     def register(self, name: str, desire_priority: int = 0, **kwargs):
         def wrapper(plugincls):
@@ -43,15 +45,17 @@ class PluginManager:
         return wrapper
 
     def save_config(self):
-        with open("./plugins/plugins.json", "w", encoding="utf-8") as f:
+        config_path = os.path.join(self.plugins_dir, "plugins.json")
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(self.pconf, f, indent=4, ensure_ascii=False)
 
     def load_config(self):
         logger.debug("Loading plugins config...")
 
         modified = False
-        if os.path.exists("./plugins/plugins.json"):
-            with open("./plugins/plugins.json", "r", encoding="utf-8") as f:
+        config_path = os.path.join(self.plugins_dir, "plugins.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
                 pconf = json.load(f)
                 pconf["plugins"] = SortedDict(lambda k, v: v["priority"], pconf["plugins"], reverse=True)
         else:
@@ -71,7 +75,7 @@ class PluginManager:
         从 plugins/config.json 中加载所有插件的配置并写入 config.py 的全局配置中，供插件中使用
         插件实例中通过 config.pconf(plugin_name) 即可获取该插件的配置
         """
-        all_config_path = "./plugins/config.json"
+        all_config_path = os.path.join(PluginManager().plugins_dir, "config.json")
         try:
             if os.path.exists(all_config_path):
                 # read from all plugins config
@@ -86,7 +90,7 @@ class PluginManager:
 
     def scan_plugins(self):
         logger.debug("Scanning plugins ...")
-        plugins_dir = "./plugins"
+        plugins_dir = self.plugins_dir
         raws = [self.plugins[name] for name in self.plugins]
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
@@ -262,7 +266,8 @@ class PluginManager:
 
         if not match:
             try:
-                with open("./plugins/source.json", "r", encoding="utf-8") as f:
+                source_path = os.path.join(self.plugins_dir, "source.json")
+                with open(source_path, "r", encoding="utf-8") as f:
                     source = json.load(f)
                 if repo in source["repo"]:
                     repo = source["repo"][repo]["url"]
@@ -274,7 +279,7 @@ class PluginManager:
             except Exception as e:
                 logger.error("Failed to install plugin, {}".format(e))
                 return False, "安装插件失败，请检查仓库地址是否正确"
-        dirname = os.path.join("./plugins", match.group(4))
+        dirname = os.path.join(self.plugins_dir, match.group(4))
         try:
             repo = porcelain.clone(repo, dirname, checkout=True)
             if os.path.exists(os.path.join(dirname, "requirements.txt")):

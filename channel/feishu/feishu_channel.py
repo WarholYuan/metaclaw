@@ -375,14 +375,14 @@ class FeiShuChanel(ChatChannel):
 
     def _get_context_timeout_seconds(self, context: Context):
         if context.get("channel_type") == self.channel_type:
-            return conf().get("feishu_request_timeout_seconds", 300)
+            return conf().get("feishu_request_timeout_seconds", 1800)
         return None
 
     def _on_context_timeout(self, context: Context):
         session_id = context.get("session_id")
         state_ref = self._feishu_session_states.get(session_id)
         stream_state = self._stream_states.get(state_ref.get("stream_id")) if state_ref else None
-        timeout_seconds = conf().get("feishu_request_timeout_seconds", 300)
+        timeout_seconds = conf().get("feishu_request_timeout_seconds", 1800)
         message = f"任务执行超过 {timeout_seconds} 秒，已停止等待并释放当前会话队列。你可以重新发送问题。"
         if stream_state:
             stream_state["status"] = "已超时"

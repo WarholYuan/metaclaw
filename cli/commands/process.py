@@ -4,22 +4,96 @@ import os
 import sys
 import subprocess
 import time
+import tempfile
+import shutil
+import zipfile
+import urllib.request
 from typing import Optional
 
 import click
 
-from cli.utils import get_project_root
-from common.brand import APP_NAME, CLI_NAME, DEFAULT_PID_FILE
+from cli.utils import get_project_root, get_pid_file, get_service_log_file
+from common.brand import APP_NAME, CLI_NAME
 
 _IS_WIN = sys.platform == "win32"
 
 
 def _get_pid_file():
-    return os.path.join(get_project_root(), DEFAULT_PID_FILE)
+    return get_pid_file()
 
 
 def _get_log_file():
-    return os.path.join(get_project_root(), "nohup.out")
+    return get_service_log_file()
+
+
+def _release_zip_url(version: str) -> str:
+    """Build the release archive URL for non-git installations."""
+    target = version[1:] if version.startswith("v") else version
+    base = os.environ.get("METACLAW_RELEASE_BASE_URL", "").strip().rstrip("/")
+    if base:
+        return f"{base}/{target}.zip"
+    return f"https://github.com/WarholYuan/metaclaw/archive/refs/tags/{target}.zip"
+
+
+def _find_extracted_project_dir(extract_dir: str) -> str:
+    """Return the extracted directory that contains app.py."""
+    direct = os.path.join(extract_dir, "app.py")
+    if os.path.exists(direct):
+        return extract_dir
+    for name in os.listdir(extract_dir):
+        candidate = os.path.join(extract_dir, name)
+        if os.path.isdir(candidate) and os.path.exists(os.path.join(candidate, "app.py")):
+            return candidate
+    raise RuntimeError("downloaded archive does not contain app.py")
+
+
+def _replace_app_from_dir(source_dir: str, target_dir: str):
+    """Replace application files while preserving local config/runtime data."""
+    preserve = {
+        "config.json",
+        ".env",
+        "nohup.out",
+        "run.log",
+        DEFAULT_LOCAL_PID_FILE,
+        "__pycache__",
+        ".pytest_cache",
+        "tmp",
+        "logs",
+        "user_datas.pkl",
+    }
+    backup_base = os.path.join(
+        os.path.dirname(target_dir),
+        f"{os.path.basename(target_dir)}_backup_{time.strftime('%Y%m%d%H%M%S')}",
+    )
+    backup_dir = backup_base
+    suffix = 1
+    while os.path.exists(backup_dir):
+        suffix += 1
+        backup_dir = f"{backup_base}_{suffix}"
+    shutil.copytree(target_dir, backup_dir, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"))
+
+    for name in os.listdir(target_dir):
+        if name in preserve or name == ".git":
+            continue
+        path = os.path.join(target_dir, name)
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+    for name in os.listdir(source_dir):
+        if name in preserve or name == ".git":
+            continue
+        src = os.path.join(source_dir, name)
+        dst = os.path.join(target_dir, name)
+        if os.path.isdir(src) and not os.path.islink(src):
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
+    return backup_dir
+
+
+DEFAULT_LOCAL_PID_FILE = f".{CLI_NAME}.pid"
 
 
 def _is_pid_alive(pid: int) -> bool:
@@ -113,6 +187,9 @@ def start(foreground, no_logs):
     else:
         log_file = _get_log_file()
         click.echo(f"Starting {APP_NAME}...")
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
 
         popen_kwargs = dict(cwd=root)
         if _IS_WIN:
@@ -222,7 +299,23 @@ def update(ctx, version, force):
                 click.echo("Error: git pull failed.", err=True)
                 sys.exit(1)
     else:
-        click.echo("Not a git repository, skipping code update.")
+        if not version:
+            click.echo("Not a git repository. Provide a version to update from a release archive.", err=True)
+            sys.exit(1)
+        url = _release_zip_url(version)
+        click.echo(f"Downloading release archive: {url}")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            archive_path = os.path.join(tmpdir, "metaclaw.zip")
+            try:
+                urllib.request.urlretrieve(url, archive_path)
+                with zipfile.ZipFile(archive_path) as zf:
+                    zf.extractall(tmpdir)
+                source_dir = _find_extracted_project_dir(tmpdir)
+                backup_dir = _replace_app_from_dir(source_dir, root)
+                click.echo(f"Backed up previous app files to: {backup_dir}")
+            except Exception as e:
+                click.echo(f"Error: release archive update failed: {e}", err=True)
+                sys.exit(1)
 
     python = sys.executable
     req_file = os.path.join(root, "requirements.txt")

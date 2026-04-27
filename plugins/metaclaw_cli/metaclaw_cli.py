@@ -151,9 +151,7 @@ class MetaClawCliPlugin(Plugin):
             "  /context       查看当前对话上下文信息",
             "  /context clear 清除当前对话上下文",
             "  /skill list    查看已安装的技能",
-            "  /skill list --remote  浏览技能广场",
-            "  /skill search <关键词>  搜索技能",
-            "  /skill install <名称>  安装技能",
+            "  /skill install <来源>  从 GitHub、URL 或本地路径安装技能",
             "  /skill info <名称>  查看技能详情",
             "  /config              查看当前配置",
             "  /config <key>        查看某项配置",
@@ -241,7 +239,13 @@ class MetaClawCliPlugin(Plugin):
 
     def _find_log_file(self) -> str:
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        try:
+            from cli.utils import get_service_log_file
+            service_log = get_service_log_file()
+        except Exception:
+            service_log = ""
         candidates = [
+            service_log,
             os.path.join(project_root, "nohup.out"),
             os.path.join(project_root, "run.log"),
         ]
@@ -515,8 +519,6 @@ class MetaClawCliPlugin(Plugin):
 
         if sub == "list":
             return self._skill_list(sub_args)
-        elif sub == "search":
-            return self._skill_search(sub_args)
         elif sub == "install":
             return self._skill_install(sub_args, e_context)
         elif sub == "uninstall":
@@ -531,9 +533,8 @@ class MetaClawCliPlugin(Plugin):
             return (
                 "用法: /skill <子命令>\n\n"
                 "子命令:\n"
-                "  list [--remote]  查看技能列表\n"
-                "  search <关键词>  搜索技能\n"
-                "  install <名称>   安装技能\n"
+                "  list            查看技能列表\n"
+                "  install <来源>   从 GitHub、URL 或本地路径安装技能\n"
                 "  uninstall <名称> 卸载技能\n"
                 "  info <名称>      查看技能详情\n"
                 "  enable <名称>    启用技能\n"
@@ -571,7 +572,7 @@ class MetaClawCliPlugin(Plugin):
                         if os.path.exists(os.path.join(skill_path, "SKILL.md")):
                             entries.append({"name": name, "source": source, "enabled": True})
             if not entries:
-                return "暂无已安装的技能\n\n💡 /skill list --remote 浏览技能广场"
+                return "暂无已安装的技能"
             config = {e["name"]: e for e in entries}
 
         sorted_entries = sorted(config.values(), key=lambda e: e.get("name", ""))
@@ -595,108 +596,17 @@ class MetaClawCliPlugin(Plugin):
             if source:
                 line += f"\n   来源: {source}"
             lines.append(line)
-            lines.append("")
+        lines.append("")
 
         lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        lines.append("💡 /skill list --remote  浏览技能广场")
         lines.append("💡 /skill info <名称>     查看详情")
         return "\n".join(lines)
 
     def _skill_list(self, args: str) -> str:
         parts = args.strip().split()
         if "--remote" in parts or "-r" in parts:
-            page = 1
-            for i, p in enumerate(parts):
-                if p == "--page" and i + 1 < len(parts) and parts[i + 1].isdigit():
-                    page = max(1, int(parts[i + 1]))
-            return self._skill_list_remote(page=page)
+            return "远程技能列表入口已移除。请使用 /skill list 查看已安装技能。"
         return self._skill_list_local()
-
-    _REMOTE_PAGE_SIZE = 10
-
-    def _skill_list_remote(self, page: int = 1) -> str:
-        import requests
-        from cli.utils import SKILL_HUB_API, load_skills_config
-        page_size = self._REMOTE_PAGE_SIZE
-        try:
-            resp = requests.get(
-                f"{SKILL_HUB_API}/skills",
-                params={"page": page, "limit": page_size},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            skills = data.get("skills", [])
-            total = data.get("total", len(skills))
-        except Exception as e:
-            return f"获取技能广场失败: {e}"
-
-        if not skills and page == 1:
-            return "技能广场暂无可用技能"
-
-        total_pages = max(1, (total + page_size - 1) // page_size)
-        page = min(page, total_pages)
-        installed = set(load_skills_config().keys())
-
-        lines = ["🌐 技能广场", ""]
-        for s in skills:
-            name = s.get("name", "")
-            display = s.get("display_name", "") or name
-            desc = s.get("description", "")
-            if len(desc) > 50:
-                desc = desc[:47] + "…"
-            badge = " [已安装]" if name in installed else ""
-            lines.append(f"📌 {display}{badge}")
-            lines.append(f"   名称: {name}")
-            if desc:
-                lines.append(f"   {desc}")
-            lines.append("")
-
-        lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        lines.append(f"📄 第 {page}/{total_pages} 页")
-        if page < total_pages:
-            lines.append(f"💡 /skill list --remote --page {page + 1}  下一页")
-        if page > 1:
-            lines.append(f"💡 /skill list --remote --page {page - 1}  上一页")
-        lines.append("💡 /skill install <名称>  安装技能")
-        lines.append("💡 /skill search <关键词>  搜索技能")
-        lines.append("🌐 https://skills.metaclaw.ai  在线浏览全部技能")
-        return "\n".join(lines)
-
-    def _skill_search(self, query: str) -> str:
-        if not query:
-            return "请指定搜索关键词: /skill search <关键词>"
-
-        import requests
-        from cli.utils import SKILL_HUB_API, load_skills_config
-        try:
-            resp = requests.get(f"{SKILL_HUB_API}/skills/search", params={"q": query}, timeout=10)
-            resp.raise_for_status()
-            skills = resp.json().get("skills", [])
-        except Exception as e:
-            return f"搜索失败: {e}"
-
-        if not skills:
-            return f"未找到与「{query}」相关的技能"
-
-        installed = set(load_skills_config().keys())
-        lines = [f"🔍 搜索「{query}」({len(skills)} 个结果)", ""]
-        for s in skills:
-            name = s.get("name", "")
-            display = s.get("display_name", "") or name
-            desc = s.get("description", "")
-            if len(desc) > 50:
-                desc = desc[:47] + "…"
-            badge = " [已安装]" if name in installed else ""
-            lines.append(f"📌 {display}{badge}")
-            lines.append(f"   名称: {name}")
-            if desc:
-                lines.append(f"   {desc}")
-            lines.append("")
-
-        lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        lines.append("💡 /skill install <名称>  安装技能")
-        return "\n".join(lines)
 
     _INSTALL_TIMEOUT = 60
 

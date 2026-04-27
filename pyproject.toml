@@ -1,19 +1,85 @@
 [build-system]
-requires = ["setuptools>=45.0"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "metaclaw"
 version = "2.0.10"
 description = "MetaClaw - AI Agent on WeChat and more"
-requires-python = ">=3.7"
+requires-python = ">=3.7,<3.14"
 dependencies = [
+    "aiohttp>=3.8.6,<3.10",
+    "chardet>=5.1.0",
     "click>=8.0",
+    "croniter>=2.0.0",
+    "dashscope",
+    "dingtalk_stream",
+    "lark-oapi",
+    "legacy-cgi; python_version >= '3.13'",
+    "Pillow",
+    "pycryptodome",
+    "python-dotenv>=1.0.0",
+    "PyYAML>=6.0",
+    "qrcode",
     "requests>=2.28.2",
+    "web.py",
+    "wechatpy",
+    "websocket-client>=1.4.0",
+    "zai-sdk",
+]
+
+[project.optional-dependencies]
+voice = [
+    "edge-tts",
+    "elevenlabs==1.0.3",
+    "gTTS>=2.3.1",
+    "pydub>=0.25.1",
+]
+documents = [
+    "openpyxl",
+    "pypdf",
+    "python-docx",
+    "python-pptx",
+]
+google = [
+    "google-generativeai",
+]
+dev = [
+    "pytest",
+]
+all = [
+    "dulwich",
+    "edge-tts",
+    "elevenlabs==1.0.3",
+    "google-generativeai",
+    "gTTS>=2.3.1",
+    "openpyxl",
+    "pydub>=0.25.1",
+    "pypdf",
+    "python-docx",
+    "python-pptx",
+    "tiktoken>=0.3.2",
 ]
 
 [project.scripts]
 metaclaw = "cli.cli:main"
 
+[tool.setuptools]
+py-modules = ["app", "config"]
+
 [tool.setuptools.packages.find]
-include = ["cli*"]
+namespaces = true
+include = [
+    "agent*",
+    "bridge*",
+    "channel*",
+    "cli*",
+    "common*",
+    "models*",
+    "plugins*",
+    "translate*",
+    "voice*",
+]
+
+[tool.setuptools.package-data]
+cli = ["VERSION"]

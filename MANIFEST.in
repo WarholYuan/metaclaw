@@ -1,0 +1,8 @@
+include config-template.json
+include requirements.txt
+include requirements-optional.txt
+include run.sh
+recursive-include scripts *
+recursive-include skills *
+recursive-include channel/web/static *
+recursive-include channel/web *.html

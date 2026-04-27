@@ -1,8 +1,10 @@
-version: '2.0'
 services:
-  chatgpt-on-wechat:
-    image: zhayujie/chatgpt-on-wechat
-    container_name: chatgpt-on-wechat
+  metaclaw:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: metaclaw:local
+    container_name: metaclaw
     security_opt:
       - seccomp:unconfined
     ports:
@@ -40,5 +42,6 @@ services:
       AGENT_MAX_CONTEXT_TOKENS: 50000
       AGENT_MAX_CONTEXT_TURNS: 20
       AGENT_MAX_STEPS: 20
+      METACLAW_WORKSPACE: '/home/agent/metaclaw'
     volumes:
-      - ./metaclaw:/home/agent/metaclaw
+      - ../data:/home/agent/metaclaw

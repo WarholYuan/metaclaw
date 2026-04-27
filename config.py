@@ -7,7 +7,7 @@ import logging
 import os
 import pickle
 
-from common.brand import DEFAULT_AGENT_WORKSPACE, DEFAULT_WEIXIN_CREDENTIALS_PATH
+from common.brand import DEFAULT_AGENT_WORKSPACE, DEFAULT_APPDATA_DIR, DEFAULT_WEIXIN_CREDENTIALS_PATH
 from common.log import logger
 
 # 将所有可用的配置项写在字典里, 请使用小写字母
@@ -150,7 +150,7 @@ available_setting = {
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
     "feishu_event_mode": "websocket",  # 飞书事件接收模式: webhook(HTTP服务器) 或 websocket(长连接)
-    "feishu_request_timeout_seconds": 300,  # 飞书单条消息最大等待时间，超时后释放会话队列
+    "feishu_request_timeout_seconds": 1800,  # 飞书单条消息最大等待时间，超时后释放会话队列
     "feishu_heartbeat_interval_seconds": 20,  # 飞书长任务卡片心跳更新时间，设为0关闭
     "feishu_fast_reply_threshold_seconds": 5,  # 该时间内完成的飞书回复保持简洁展示
     "feishu_detail_expand_threshold_seconds": 10,  # 超过该时间后展开工具/思考等细节
@@ -178,7 +178,7 @@ available_setting = {
     "web_console": True,  # 是否自动启动Web控制台（默认启动）。设为False可禁用
     "subscribe_msg": "",  # 订阅消息, 支持: wechatmp, wechatmp_service, wechatcom_app
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
-    "appdata_dir": "",  # 数据目录
+    "appdata_dir": DEFAULT_APPDATA_DIR,  # 数据目录，默认放在用户工作区，不污染程序目录
     # 插件配置
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
     # 是否使用全局插件配置
@@ -370,6 +370,30 @@ def _format_env_override_log(key: str, value) -> str:
     return "[INIT] override config by environ args: {}={}".format(key, rendered)
 
 
+def get_config_path() -> str:
+    """Resolve the active config file path.
+
+    Precedence:
+    1. METACLAW_CONFIG_FILE
+    2. ~/metaclaw/config.json
+    3. ./config.json
+    4. ./config-template.json
+    """
+    env_path = os.environ.get("METACLAW_CONFIG_FILE", "").strip()
+    if env_path:
+        return os.path.expanduser(env_path)
+
+    workspace_config = os.path.expanduser(os.path.join(DEFAULT_AGENT_WORKSPACE, "config.json"))
+    if os.path.exists(workspace_config):
+        return workspace_config
+
+    project_config = "./config.json"
+    if os.path.exists(project_config):
+        return project_config
+
+    return "./config-template.json"
+
+
 def load_config():
     global config
 
@@ -380,10 +404,9 @@ def load_config():
     logger.info("| |  | |  __/ || (_| | |___| | (_| |\\ V  V / ")
     logger.info("|_|  |_|\\___|\\__\\__,_|\\____|_|\\__,_| \\_/\\_/  ")
     logger.info("")
-    config_path = "./config.json"
-    if not os.path.exists(config_path):
+    config_path = get_config_path()
+    if os.path.basename(config_path) == "config-template.json":
         logger.info("配置文件不存在，将使用config-template.json模板")
-        config_path = "./config-template.json"
 
     config_str = read_file(config_path)
     logger.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
@@ -394,10 +417,14 @@ def load_config():
     # Brand defaults and legacy value migration.
     if "agent_workspace" not in config:
         config["agent_workspace"] = DEFAULT_AGENT_WORKSPACE
+    if "appdata_dir" not in config:
+        config["appdata_dir"] = DEFAULT_APPDATA_DIR
     if "weixin_credentials_path" not in config:
         config["weixin_credentials_path"] = DEFAULT_WEIXIN_CREDENTIALS_PATH
     if config.get("agent_workspace") == "~/metaclaw":
         config["agent_workspace"] = DEFAULT_AGENT_WORKSPACE
+    if config.get("appdata_dir") == "":
+        config["appdata_dir"] = DEFAULT_APPDATA_DIR
     if config.get("weixin_credentials_path") == "~/.weixin_metaclaw_credentials.json":
         config["weixin_credentials_path"] = DEFAULT_WEIXIN_CREDENTIALS_PATH
 
@@ -531,7 +558,10 @@ def conf():
 
 
 def get_appdata_dir():
-    data_path = os.path.join(get_root(), conf().get("appdata_dir", ""))
+    configured = conf().get("appdata_dir", DEFAULT_APPDATA_DIR)
+    configured = DEFAULT_APPDATA_DIR if configured == "" else configured
+    configured = os.path.expanduser(configured)
+    data_path = configured if os.path.isabs(configured) else os.path.join(get_root(), configured)
     if not os.path.exists(data_path):
         logger.info("[INIT] data path not exists, create it: {}".format(data_path))
         os.makedirs(data_path)

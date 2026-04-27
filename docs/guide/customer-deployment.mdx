@@ -1,0 +1,86 @@
+---
+title: 客户部署与升级
+description: 面向不依赖 Git 的客户机器部署、目录规划和版本升级约定。
+---
+
+# 客户部署与升级
+
+本文记录 MetaClaw 面向客户机器交付时的推荐约定。目标是让客户不需要理解 Git，也不依赖 GitHub 访问，即可安装、运行和升级固定版本。
+
+## 运行前提
+
+客户机器最少需要：
+
+- Python 3.11 或 Python 3.12
+- pip
+- 可访问模型服务和所需通道平台的网络环境
+
+如需 Agent 操作浏览器，安装完成后还需要执行：
+
+```bash
+metaclaw install-browser
+```
+
+## 目录约定
+
+推荐固定使用两个目录：
+
+```text
+~/metaclaw-app/    程序目录，只放应用代码和依赖安装入口
+~/metaclaw/        客户数据目录，存放配置、记忆、知识库、日志、Skills
+```
+
+升级时只替换 `~/metaclaw-app/` 中的程序文件，不触碰 `~/metaclaw/` 下的客户数据。
+
+## 配置约定
+
+客户配置优先放在：
+
+```text
+~/metaclaw/config.json
+```
+
+也可以通过环境变量指定配置文件：
+
+```bash
+export METACLAW_CONFIG_FILE=/path/to/config.json
+```
+
+`agent_workspace` 和 `appdata_dir` 建议保持在客户数据目录中：
+
+```json
+{
+  "agent_workspace": "~/metaclaw",
+  "appdata_dir": "~/metaclaw/data"
+}
+```
+
+## 安装入口
+
+客户侧理想安装入口为：
+
+```bash
+curl -L https://你的域名/install.sh | bash
+```
+
+`install.sh` 建议从 Cloudflare R2 或备用国内对象存储下载固定版本 zip，并安装到 `~/metaclaw-app/`。
+
+## 升级入口
+
+客户侧升级使用固定版本号：
+
+```bash
+metaclaw update 2.0.10
+```
+
+不建议客户机器跟随 `master`。每次发版应发布不可变版本包，并通过版本号升级。
+
+## 版本管理
+
+发布版本时保持以下文件一致：
+
+- `cli/VERSION`
+- `pyproject.toml` 中的 `project.version`
+- Web UI `/api/version` 展示的版本来源
+
+源码和 tag 由 GitHub 管理；客户机器按固定版本 zip 安装和升级。

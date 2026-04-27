@@ -1,6 +1,9 @@
 import logging
 import sys
 import io
+import os
+
+from common.brand import DEFAULT_RUN_LOG_FILE
 
 
 def _reset_logger(log):
@@ -20,7 +23,11 @@ def _reset_logger(log):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
-    file_handle = logging.FileHandler("run.log", encoding="utf-8")
+    log_file = os.path.expanduser(os.environ.get("METACLAW_RUN_LOG_FILE", DEFAULT_RUN_LOG_FILE))
+    log_dir = os.path.dirname(log_file)
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+    file_handle = logging.FileHandler(log_file, encoding="utf-8")
     file_handle.setFormatter(
         logging.Formatter(
             "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",

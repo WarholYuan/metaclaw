@@ -1,4 +1,6 @@
-from config import _format_env_override_log, _parse_env_override_value
+import os
+
+from config import _format_env_override_log, _parse_env_override_value, get_appdata_dir, get_config_path, config
 
 
 def test_parse_env_override_value_bool():
@@ -20,3 +22,24 @@ def test_format_env_override_log_masks_sensitive_values():
     msg = _format_env_override_log("open_ai_api_key", "sk-secret-value")
     assert "sk-secret-value" not in msg
     assert "*****" in msg
+
+
+def test_default_appdata_dir_is_workspace_data():
+    old_value = config.get("appdata_dir")
+    try:
+        config["appdata_dir"] = "~/metaclaw/data"
+        assert get_appdata_dir().endswith(os.path.join("metaclaw", "data"))
+        assert os.path.isabs(get_appdata_dir())
+    finally:
+        if old_value is None:
+            config.pop("appdata_dir", None)
+        else:
+            config["appdata_dir"] = old_value
+
+
+def test_config_path_env_override(monkeypatch, tmp_path):
+    path = tmp_path / "custom-config.json"
+    path.write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("METACLAW_CONFIG_FILE", str(path))
+
+    assert get_config_path() == str(path)

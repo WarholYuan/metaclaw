@@ -51,6 +51,10 @@ fi
 
 # Get current script directory
 export BASE_DIR=$(cd "$(dirname "$0")"; pwd)
+export METACLAW_WORKSPACE="${METACLAW_WORKSPACE:-$HOME/metaclaw}"
+export METACLAW_CONFIG_FILE="${METACLAW_CONFIG_FILE:-$METACLAW_WORKSPACE/config.json}"
+export METACLAW_LOG_DIR="${METACLAW_LOG_DIR:-$METACLAW_WORKSPACE/logs}"
+export METACLAW_SERVICE_LOG="${METACLAW_SERVICE_LOG:-$METACLAW_LOG_DIR/nohup.out}"
 
 # Detect if in project directory
 IS_PROJECT_DIR=false
@@ -92,20 +96,20 @@ detect_python_command() {
     FOUND_NEWER_VERSION=""
     
     # Try to find Python command in order of preference
-    for cmd in python3 python python3.12 python3.11 python3.10 python3.9 python3.8 python3.7; do
+    for cmd in python3 python python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7; do
         if command -v $cmd &> /dev/null; then
             # Check Python version
             major_version=$($cmd -c 'import sys; print(sys.version_info[0])' 2>/dev/null)
             minor_version=$($cmd -c 'import sys; print(sys.version_info[1])' 2>/dev/null)
             
             if [[ "$major_version" == "3" ]]; then
-                # Check if version is in supported range (3.7 - 3.12)
-                if (( minor_version >= 7 && minor_version <= 12 )); then
+                # Check if version is in supported range (3.7 - 3.13)
+                if (( minor_version >= 7 && minor_version <= 13 )); then
                     PYTHON_CMD=$cmd
                     PYTHON_VERSION="${major_version}.${minor_version}"
                     break
                 elif (( minor_version >= 13 )); then
-                    # Found Python 3.13+, but not compatible
+                    # Found Python newer than the tested compatibility range
                     if [ -z "$FOUND_NEWER_VERSION" ]; then
                         FOUND_NEWER_VERSION="${major_version}.${minor_version}"
                     fi
@@ -115,13 +119,12 @@ detect_python_command() {
     done
     
     if [ -z "$PYTHON_CMD" ]; then
-        echo -e "${YELLOW}Tried: python3, python, python3.12, python3.11, python3.10, python3.9, python3.8, python3.7${NC}"
+        echo -e "${YELLOW}Tried: python3, python, python3.13, python3.12, python3.11, python3.10, python3.9, python3.8, python3.7${NC}"
         if [ -n "$FOUND_NEWER_VERSION" ]; then
-            echo -e "${RED}❌ Found Python $FOUND_NEWER_VERSION, but this project requires Python 3.7-3.12${NC}"
-            echo -e "${YELLOW}Python 3.13+ has compatibility issues with some dependencies (web.py, cgi module removed)${NC}"
-            echo -e "${YELLOW}Please install Python 3.7-3.12 (recommend Python 3.12)${NC}"
+            echo -e "${RED}❌ Found Python $FOUND_NEWER_VERSION, but this project requires Python 3.7-3.13${NC}"
+            echo -e "${YELLOW}Please install Python 3.7-3.13 (recommend Python 3.12)${NC}"
         else
-            echo -e "${RED}❌ No suitable Python found. Please install Python 3.7-3.12${NC}"
+            echo -e "${RED}❌ No suitable Python found. Please install Python 3.7-3.13${NC}"
         fi
         exit 1
     fi
@@ -506,6 +509,7 @@ configure_channel() {
 # Generate config file
 create_config_file() {
     echo -e "${GREEN}📝 Generating config.json...${NC}"
+    mkdir -p "${METACLAW_WORKSPACE}"
 
     CHANNEL_TYPE="$CHANNEL_TYPE" \
     MODEL_NAME="$MODEL_NAME" \
@@ -539,9 +543,12 @@ create_config_file() {
     WECHATCOM_AGENT_ID="${WECHATCOM_AGENT_ID:-}" \
     WECHATCOM_AES_KEY="${WECHATCOM_AES_KEY:-}" \
     WECHATCOM_PORT="${WECHATCOM_PORT:-}" \
+    METACLAW_CONFIG_FILE="${METACLAW_CONFIG_FILE}" \
+    METACLAW_WORKSPACE="${METACLAW_WORKSPACE}" \
     $PYTHON_CMD -c "
 import json, os
 e = os.environ.get
+workspace = os.path.expanduser(e('METACLAW_WORKSPACE', '~/metaclaw'))
 base = {
     'channel_type': e('CHANNEL_TYPE'),
     'model': e('MODEL_NAME'),
@@ -566,6 +573,8 @@ base = {
     'use_linkai': e('USE_LINKAI') == 'true',
     'linkai_api_key': e('LINKAI_KEY', ''),
     'linkai_app_code': '',
+    'agent_workspace': workspace,
+    'appdata_dir': os.path.join(workspace, 'data'),
     'agent': True,
     'agent_max_context_tokens': 40000,
     'agent_max_context_turns': 30,
@@ -586,11 +595,13 @@ for key, spec in channel_map.get(ch, {}).items():
         base[key] = conv(e(env_name))
     else:
         base[key] = e(spec, '')
-with open('config.json', 'w') as f:
+config_file = os.path.expanduser(e('METACLAW_CONFIG_FILE', os.path.join(workspace, 'config.json')))
+os.makedirs(os.path.dirname(config_file), exist_ok=True)
+with open(config_file, 'w') as f:
     json.dump(base, f, indent=2, ensure_ascii=False)
 "
 
-    echo -e "${GREEN}✅ Configuration file created successfully.${NC}"
+    echo -e "${GREEN}✅ Configuration file created successfully: ${METACLAW_CONFIG_FILE}${NC}"
 }
 
 # Start project
@@ -608,17 +619,16 @@ start_project() {
         cd "${BASE_DIR}"
         metaclaw start --no-logs
     else
-        if [ ! -f "${BASE_DIR}/nohup.out" ]; then
-            touch "${BASE_DIR}/nohup.out"
-        fi
+        mkdir -p "${METACLAW_LOG_DIR}"
+        touch "${METACLAW_SERVICE_LOG}"
 
         OS_TYPE=$(uname)
 
         if [[ "$OS_TYPE" == "Linux" ]]; then
-            nohup setsid $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+            nohup setsid $PYTHON_CMD "${BASE_DIR}/app.py" > "${METACLAW_SERVICE_LOG}" 2>&1 &
             echo -e "${GREEN}${EMOJI_MARK} MetaClaw started on Linux (using $PYTHON_CMD)${NC}"
         elif [[ "$OS_TYPE" == "Darwin" ]]; then
-            nohup $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+            nohup $PYTHON_CMD "${BASE_DIR}/app.py" > "${METACLAW_SERVICE_LOG}" 2>&1 &
             echo -e "${GREEN}${EMOJI_MARK} MetaClaw started on macOS (using $PYTHON_CMD)${NC}"
         else
             echo -e "${RED}❌ Unsupported OS: ${OS_TYPE}${NC}"
@@ -653,7 +663,7 @@ start_project() {
 
     echo -e "${YELLOW}Showing recent logs (Ctrl+C to exit, agent keeps running):${NC}"
     sleep 2
-    tail -n 30 -f "${BASE_DIR}/nohup.out"
+    tail -n 30 -f "${METACLAW_SERVICE_LOG}"
 }
 
 # Show usage
@@ -787,8 +797,8 @@ cmd_status() {
             pid=$(get_pid)
             echo -e "${GREEN}Status:${NC} ✅ Running"
             echo -e "${GREEN}PID:${NC}    ${pid}"
-            if [ -f "${BASE_DIR}/nohup.out" ]; then
-                echo -e "${GREEN}Logs:${NC}   ${BASE_DIR}/nohup.out"
+            if [ -f "${METACLAW_SERVICE_LOG}" ]; then
+                echo -e "${GREEN}Logs:${NC}   ${METACLAW_SERVICE_LOG}"
             fi
         else
             echo -e "${YELLOW}Status:${NC} ⭐ Stopped"
@@ -811,11 +821,11 @@ cmd_logs() {
         cd "${BASE_DIR}"
         metaclaw logs -f
     else
-        if [ -f "${BASE_DIR}/nohup.out" ]; then
+        if [ -f "${METACLAW_SERVICE_LOG}" ]; then
             echo -e "${YELLOW}Viewing logs (Ctrl+C to exit):${NC}"
-            tail -f "${BASE_DIR}/nohup.out"
+            tail -f "${METACLAW_SERVICE_LOG}"
         else
-            echo -e "${RED}❌ Log file not found: ${BASE_DIR}/nohup.out${NC}"
+            echo -e "${RED}❌ Log file not found: ${METACLAW_SERVICE_LOG}${NC}"
         fi
     fi
 }
@@ -902,7 +912,16 @@ cmd_update() {
             fi
         fi
     else
-        echo -e "${YELLOW}⚠️  Not a git repository, skipping code update${NC}"
+        if [ -z "$target_version" ]; then
+            echo -e "${RED}❌ Not a git repository. Provide a version, for example: ./run.sh update 2.0.10${NC}"
+            exit 1
+        fi
+        if has_metaclaw_cli; then
+            metaclaw update "$target_version"
+            return
+        fi
+        echo -e "${RED}❌ Not a git repository and metaclaw CLI is unavailable. Cannot update from release archive.${NC}"
+        exit 1
     fi
     
     # Re-exec with the updated run.sh to pick up new logic
@@ -938,7 +957,7 @@ install_mode() {
     if [ "$IS_PROJECT_DIR" = true ]; then
         echo -e "${GREEN}✅ Detected existing project directory.${NC}"
         
-        if [ -f "${BASE_DIR}/config.json" ]; then
+        if [ -f "${METACLAW_CONFIG_FILE}" ] || [ -f "${BASE_DIR}/config.json" ]; then
             echo -e "${GREEN}✅ Project already configured${NC}"
             echo ""
             show_usage
@@ -976,7 +995,7 @@ install_mode() {
         echo -e "${YELLOW}  ./run.sh start${NC}"
         echo ""
         echo -e "${CYAN}Or use nohup directly:${NC}"
-        echo -e "${YELLOW}  nohup $PYTHON_CMD app.py > nohup.out 2>&1 & tail -f nohup.out${NC}"
+        echo -e "${YELLOW}  nohup $PYTHON_CMD app.py > ${METACLAW_SERVICE_LOG} 2>&1 & tail -f ${METACLAW_SERVICE_LOG}${NC}"
     fi
 }
 

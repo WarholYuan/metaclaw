@@ -49,7 +49,8 @@ SAFETY:
 
     def __init__(self, config: dict = None):
         self.config = config or {}
-        self.cwd = self.config.get("cwd", os.getcwd())
+        # sandbox_workspace takes precedence over cwd when explicitly provided
+        self.cwd = self.config.get("sandbox_workspace", self.config.get("cwd", os.getcwd()))
         # Ensure working directory exists
         if not os.path.exists(self.cwd):
             os.makedirs(self.cwd, exist_ok=True)

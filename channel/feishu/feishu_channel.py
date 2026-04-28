@@ -1580,7 +1580,7 @@ class FeiShuChanel(ChatChannel):
         content_key = "text"
         if reply.type == ReplyType.IMAGE_URL:
             # 图片上传
-            reply_content = self._upload_image_url(reply.content, access_token)
+            reply_content = self._upload_image_url(reply.content, access_token, tmp_dir=context.get("session_tmp_dir"))
             if not reply_content:
                 logger.warning("[FeiShu] upload image failed")
                 return
@@ -1603,7 +1603,7 @@ class FeiShuChanel(ChatChannel):
 
             if is_video:
                 # 视频上传（包含duration信息）
-                upload_data = self._upload_video_url(reply.content, access_token)
+                upload_data = self._upload_video_url(reply.content, access_token, tmp_dir=context.get("session_tmp_dir"))
                 if not upload_data or not upload_data.get('file_key'):
                     logger.warning("[FeiShu] upload video failed")
                     return
@@ -1617,7 +1617,7 @@ class FeiShuChanel(ChatChannel):
                 content_key = None  # 直接序列化整个对象
             else:
                 # 其他文件使用 file 类型
-                file_key = self._upload_file_url(reply.content, access_token)
+                file_key = self._upload_file_url(reply.content, access_token, tmp_dir=context.get("session_tmp_dir"))
                 if not file_key:
                     logger.warning("[FeiShu] upload file failed")
                     return
@@ -1680,7 +1680,7 @@ class FeiShuChanel(ChatChannel):
         else:
             logger.error(f"[FeiShu] fetch token error, res={response}")
 
-    def _upload_image_url(self, img_url, access_token):
+    def _upload_image_url(self, img_url, access_token, tmp_dir=None):
         logger.debug(f"[FeiShu] start process image, img_url={img_url}")
 
         # Check if it's a local file path (file:// protocol)
@@ -1711,11 +1711,16 @@ class FeiShuChanel(ChatChannel):
         # Original logic for HTTP URLs
         response = requests.get(img_url)
         suffix = utils.get_path_suffix(img_url)
-        temp_name = str(uuid.uuid4()) + "." + suffix
+        _dir = tmp_dir or "tmp"
+        os.makedirs(_dir, exist_ok=True)
+        temp_name = os.path.join(_dir, str(uuid.uuid4()) + "." + suffix)
         if response.status_code == 200:
             # 将图片内容保存为临时文件
             with open(temp_name, "wb") as file:
                 file.write(response.content)
+        else:
+            logger.error(f"[FeiShu] download image failed, status={response.status_code}")
+            return None
 
         # upload
         upload_url = "https://open.feishu.cn/open-apis/im/v1/images"
@@ -1769,7 +1774,7 @@ class FeiShuChanel(ChatChannel):
             logger.warning(f"[FeiShu] Failed to get video duration: {e}")
             return 0
 
-    def _upload_video_url(self, video_url, access_token):
+    def _upload_video_url(self, video_url, access_token, tmp_dir=None):
         """
         Upload video to Feishu and return video info (file_key and duration)
         Supports:
@@ -1798,9 +1803,10 @@ class FeiShuChanel(ChatChannel):
                     return None
 
                 # Save to temp file
-                import uuid
                 file_name = os.path.basename(video_url) or "video.mp4"
-                temp_file = str(uuid.uuid4()) + "_" + file_name
+                _dir = tmp_dir or "tmp"
+                os.makedirs(_dir, exist_ok=True)
+                temp_file = os.path.join(_dir, str(uuid.uuid4()) + "_" + file_name)
 
                 with open(temp_file, "wb") as file:
                     file.write(response.content)
@@ -1865,7 +1871,7 @@ class FeiShuChanel(ChatChannel):
                 except Exception as e:
                     logger.warning(f"[FeiShu] Failed to remove temp file {temp_file}: {e}")
 
-    def _upload_file_url(self, file_url, access_token):
+    def _upload_file_url(self, file_url, access_token, tmp_dir=None):
         """
         Upload file to Feishu
         Supports both local files (file://) and HTTP URLs
@@ -1932,9 +1938,10 @@ class FeiShuChanel(ChatChannel):
                 return None
 
             # Save to temp file
-            import uuid
             file_name = os.path.basename(file_url)
-            temp_name = str(uuid.uuid4()) + "_" + file_name
+            _dir = tmp_dir or "tmp"
+            os.makedirs(_dir, exist_ok=True)
+            temp_name = os.path.join(_dir, str(uuid.uuid4()) + "_" + file_name)
 
             with open(temp_name, "wb") as file:
                 file.write(response.content)

@@ -382,6 +382,15 @@ class AgentBridge:
             agent = self.get_agent(session_id=session_id)
             if not agent:
                 return Reply(ReplyType.ERROR, "Failed to initialize super agent")
+
+            # Inject session_tmp_dir into tool cwd so agent artifacts land in session dir
+            session_tmp_dir = context.get("session_tmp_dir") if context else None
+            if session_tmp_dir and agent.tools:
+                for tool in agent.tools:
+                    if hasattr(tool, 'cwd'):
+                        tool.cwd = session_tmp_dir
+                        if not os.path.exists(session_tmp_dir):
+                            os.makedirs(session_tmp_dir, exist_ok=True)
             
             # Create event handler for logging and channel communication
             event_handler = AgentEventHandler(context=context, original_callback=on_event)

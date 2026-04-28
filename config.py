@@ -213,6 +213,8 @@ available_setting = {
     "web_session_expire_days": 30,  # Auth session expiry in days
     "agent": True,  # 是否开启Agent模式
     "agent_workspace": DEFAULT_AGENT_WORKSPACE,  # agent工作空间路径，用于存储skills、memory等
+    "sandbox_enabled": False,  # Enable sandbox workspace for bash tool
+    "sandbox_workspace": "~/metaclaw-sandbox",  # Sandbox working directory
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 20,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
@@ -259,7 +261,9 @@ class Config(dict):
         try:
             return self[key]
         except KeyError as e:
-            return default
+            if default is not None:
+                return default
+            return available_setting.get(key)
         except Exception as e:
             raise e
 
@@ -287,6 +291,30 @@ class Config(dict):
                 logger.info("[Config] User datas saved.")
         except Exception as e:
             logger.info("[Config] User datas error: {}".format(e))
+
+
+def get_writable_config_path() -> str:
+    """Resolve the config file path to write updates to.
+
+    Preference:
+    1. METACLAW_CONFIG_FILE (explicit override)
+    2. Existing workspace config
+    3. Existing project config
+    4. Workspace config (create on first write)
+    """
+    env_path = os.environ.get("METACLAW_CONFIG_FILE", "").strip()
+    if env_path:
+        return os.path.expanduser(env_path)
+
+    workspace_config = os.path.expanduser(os.path.join(DEFAULT_AGENT_WORKSPACE, "config.json"))
+    if os.path.exists(workspace_config):
+        return workspace_config
+
+    project_config = "./config.json"
+    if os.path.exists(project_config):
+        return project_config
+
+    return workspace_config
 
 
 config = Config()
@@ -377,7 +405,8 @@ def get_config_path() -> str:
     1. METACLAW_CONFIG_FILE
     2. ~/metaclaw/config.json
     3. ./config.json
-    4. ./config-template.json
+    4. ../config.json
+    5. ./config-template.json
     """
     env_path = os.environ.get("METACLAW_CONFIG_FILE", "").strip()
     if env_path:
@@ -390,6 +419,10 @@ def get_config_path() -> str:
     project_config = "./config.json"
     if os.path.exists(project_config):
         return project_config
+
+    parent_project_config = os.path.abspath(os.path.join(os.getcwd(), "..", "config.json"))
+    if os.path.exists(parent_project_config):
+        return parent_project_config
 
     return "./config-template.json"
 
@@ -410,9 +443,26 @@ def load_config():
 
     config_str = read_file(config_path)
     logger.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
+    file_config = json.loads(config_str)
+
+    # Support partial config files written by the web console by layering them
+    # on top of the template defaults instead of treating them as complete config.
+    if os.path.basename(config_path) != "config-template.json":
+        template_path = "./config-template.json"
+        if os.path.exists(template_path):
+            try:
+                template_config = json.loads(read_file(template_path))
+                template_config.update(file_config)
+                file_config = template_config
+            except Exception as e:
+                logger.warning("[Config] Failed to merge config-template defaults: {}".format(e))
+
+    for key, value in available_setting.items():
+        if key not in file_config:
+            file_config[key] = copy.deepcopy(value)
 
     # 将json字符串反序列化为dict类型
-    config = Config(json.loads(config_str))
+    config = Config(file_config)
 
     # Brand defaults and legacy value migration.
     if "agent_workspace" not in config:

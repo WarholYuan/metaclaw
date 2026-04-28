@@ -38,6 +38,8 @@
   "web_password": "",
   "agent": true,
   "agent_workspace": "~/metaclaw",
+  "sandbox_enabled": false,
+  "sandbox_workspace": "~/metaclaw-sandbox",
   "appdata_dir": "~/metaclaw/data",
   "agent_max_context_tokens": 50000,
   "agent_max_context_turns": 20,

@@ -35,7 +35,7 @@ from common import utils
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.session_cancel import clear_cancel, request_cancel
-from common.session_tmp import get_session_tmp_dir
+from common.session_tmp import get_session_tmp_dir, cleanup_session_tmp
 from common.singleton import singleton
 from config import conf
 
@@ -364,6 +364,7 @@ class FeiShuChanel(ChatChannel):
         if context:
             self._send_status_card("已清空当前对话上下文。下一条消息会从新的上下文开始。", context, title="已新建会话", template="green")
         logger.info(f"[FeiShu] new session requested, session_id={session_id}")
+        cleanup_session_tmp(session_id)
 
     def _handle_abort_message(self, session_id: str, feishu_msg: FeishuMessage, receive_id_type: str):
         request_cancel(session_id)
@@ -427,6 +428,7 @@ class FeiShuChanel(ChatChannel):
         if session_id in self._feishu_session_states:
             self._feishu_session_states[session_id]["status"] = "timeout"
         logger.warning(f"[FeiShu] context timeout, session_id={session_id}")
+        cleanup_session_tmp(session_id)
 
     def _handle_message_event(self, event: dict):
         """

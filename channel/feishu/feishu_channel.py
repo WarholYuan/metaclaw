@@ -35,6 +35,7 @@ from common import utils
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.session_cancel import clear_cancel, request_cancel
+from common.session_tmp import get_session_tmp_dir
 from common.singleton import singleton
 from config import conf
 
@@ -2012,6 +2013,9 @@ class FeiShuChanel(ChatChannel):
             if "desire_rtype" not in context and conf().get("voice_reply_voice"):
                 context["desire_rtype"] = ReplyType.VOICE
 
+        session_id = context.get("session_id")
+        if session_id:
+            context["session_tmp_dir"] = get_session_tmp_dir(session_id)
         return context
 
 

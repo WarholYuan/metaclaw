@@ -343,12 +343,19 @@ class AgentInitializer:
         tool_manager = ToolManager()
         tool_manager.load_tools()
         
+        # Sandbox workspace setup
+        from config import conf
+        sandbox_enabled = conf().get("sandbox_enabled", False)
+        sandbox_workspace = expand_path(conf().get("sandbox_workspace", "~/metaclaw-sandbox"))
+        if sandbox_enabled:
+            os.makedirs(sandbox_workspace, exist_ok=True)
+
         tools = []
         file_config = {
             "cwd": workspace_root,
             "memory_manager": memory_manager
         } if memory_manager else {"cwd": workspace_root}
-        
+
         for tool_name in tool_manager.tool_classes.keys():
             try:
                 # Skip web_search if no API key is available
@@ -368,8 +375,13 @@ class AgentInitializer:
                 if tool:
                     # Apply workspace config to file operation tools
                     if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls', 'web_fetch', 'send', 'browser']:
-                        tool.config = file_config
-                        tool.cwd = file_config.get("cwd", getattr(tool, 'cwd', None))
+                        # Sandbox: bash tool gets isolated workspace; others keep agent workspace
+                        if tool_name == 'bash' and sandbox_enabled:
+                            tool.config = dict(file_config, sandbox_workspace=sandbox_workspace)
+                            tool.cwd = sandbox_workspace
+                        else:
+                            tool.config = file_config
+                            tool.cwd = file_config.get("cwd", getattr(tool, 'cwd', None))
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
                     tools.append(tool)

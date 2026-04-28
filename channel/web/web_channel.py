@@ -21,7 +21,7 @@ from common import const
 from common.brand import APP_NAME, DEFAULT_AGENT_WORKSPACE, DEFAULT_RUN_LOG_FILE, DEFAULT_WEIXIN_CREDENTIALS_PATH
 from common.log import logger
 from common.singleton import singleton
-from config import conf
+from config import conf, get_writable_config_path
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".avi", ".mov", ".mkv"}
@@ -626,6 +626,8 @@ class WebChannel(ChatChannel):
             '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
             '/api/version', 'VersionHandler',
+            '/api/feishu/users', 'FeishuUsersHandler',
+            '/api/feishu/users/(.*)', 'FeishuUserDetailHandler',
             '/assets/(.*)', 'AssetsHandler',
         )
         app = web.application(urls, globals(), autoreload=False)
@@ -999,8 +1001,10 @@ class ConfigHandler:
             if not applied:
                 return json.dumps({"status": "error", "message": "no valid keys to update"})
 
-            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-                os.path.abspath(__file__)))), "config.json")
+            config_path = os.path.expanduser(get_writable_config_path())
+            config_dir = os.path.dirname(config_path)
+            if config_dir:
+                os.makedirs(config_dir, exist_ok=True)
             if os.path.exists(config_path):
                 with open(config_path, "r", encoding="utf-8") as f:
                     file_cfg = json.load(f)
@@ -1226,8 +1230,10 @@ class ChannelsHandler:
         if not applied:
             return json.dumps({"status": "error", "message": "no valid fields to update"})
 
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__)))), "config.json")
+        config_path = os.path.expanduser(get_writable_config_path())
+        config_dir = os.path.dirname(config_path)
+        if config_dir:
+            os.makedirs(config_dir, exist_ok=True)
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 file_cfg = json.load(f)
@@ -1297,8 +1303,10 @@ class ChannelsHandler:
         new_channel_type = ",".join(existing)
         local_config["channel_type"] = new_channel_type
 
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__)))), "config.json")
+        config_path = os.path.expanduser(get_writable_config_path())
+        config_dir = os.path.dirname(config_path)
+        if config_dir:
+            os.makedirs(config_dir, exist_ok=True)
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 file_cfg = json.load(f)
@@ -1353,8 +1361,10 @@ class ChannelsHandler:
         local_config = conf()
         local_config["channel_type"] = new_channel_type
 
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__)))), "config.json")
+        config_path = os.path.expanduser(get_writable_config_path())
+        config_dir = os.path.dirname(config_path)
+        if config_dir:
+            os.makedirs(config_dir, exist_ok=True)
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 file_cfg = json.load(f)
@@ -1966,3 +1976,73 @@ class VersionHandler:
         web.header('Content-Type', 'application/json; charset=utf-8')
         from cli import __version__
         return json.dumps({"version": __version__})
+
+
+class FeishuUsersHandler:
+    @staticmethod
+    def _get_feishu_channel():
+        try:
+            import sys
+            app_module = sys.modules.get('__main__') or sys.modules.get('app')
+            mgr = getattr(app_module, '_channel_mgr', None) if app_module else None
+            if mgr:
+                return mgr.get_channel("feishu")
+        except Exception:
+            pass
+        return None
+
+    def GET(self):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from common.user_manager import UserManager, PERMISSION_LABELS, PERMISSION_TOOLS
+            user_mgr = UserManager()
+            users = user_mgr.list_users()
+            # 对 name 仍是 open_id 的用户，主动通过飞书 API 补全昵称
+            feishu_ch = self._get_feishu_channel()
+            if feishu_ch and hasattr(feishu_ch, '_fetch_user_name'):
+                for user in users:
+                    open_id = user.get("open_id", "")
+                    if user.get("name") == open_id:
+                        name = feishu_ch._fetch_user_name(open_id)
+                        if name != open_id:
+                            user["name"] = name
+                            user_mgr.update_user(open_id, {"name": name})
+            return json.dumps({
+                "status": "success",
+                "users": users,
+                "permission_labels": PERMISSION_LABELS,
+                "permission_tools": PERMISSION_TOOLS,
+            }, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] FeishuUsers GET error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class FeishuUserDetailHandler:
+    def PUT(self, open_id):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from common.user_manager import UserManager
+            body = json.loads(web.data())
+            ok = UserManager().update_user(open_id, body)
+            if ok:
+                return json.dumps({"status": "success"})
+            return json.dumps({"status": "error", "message": "user not found"})
+        except Exception as e:
+            logger.error(f"[WebChannel] FeishuUser PUT error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    def DELETE(self, open_id):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from common.user_manager import UserManager
+            ok = UserManager().delete_user(open_id)
+            if ok:
+                return json.dumps({"status": "success"})
+            return json.dumps({"status": "error", "message": "user not found"})
+        except Exception as e:
+            logger.error(f"[WebChannel] FeishuUser DELETE error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})

@@ -119,6 +119,26 @@ class FeiShuChanel(ChatChannel):
         except Exception as e:
             logger.warning(f"[FeiShu] Fetch bot open_id error: {e}")
 
+    def _fetch_user_name(self, open_id: str) -> str:
+        """通过飞书 Contact API 获取用户昵称，失败时返回 open_id。"""
+        try:
+            access_token = self.fetch_access_token()
+            if not access_token:
+                return open_id
+            headers = {"Authorization": "Bearer " + access_token}
+            url = f"https://open.feishu.cn/open-apis/contact/v3/users/{open_id}?user_id_type=open_id"
+            resp = requests.get(url, headers=headers, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("code") == 0:
+                    name = data.get("data", {}).get("user", {}).get("name", "")
+                    if name:
+                        logger.info(f"[FeiShu] Fetched name for {open_id}: {name}")
+                        return name
+        except Exception as e:
+            logger.warning(f"[FeiShu] Fetch user name error for {open_id}: {e}")
+        return open_id
+
     def stop(self):
         import ctypes
         logger.info("[FeiShu] stop() called")
@@ -458,6 +478,25 @@ class FeiShuChanel(ChatChannel):
         if not feishu_msg:
             return
 
+        # 注册用户并检查权限
+        from common.user_manager import UserManager, PERMISSION_BLOCKED
+        user_mgr = UserManager()
+        sender_open_id = feishu_msg.from_user_id
+        # 新用户或昵称未设置时，通过飞书 API 获取真实昵称
+        existing = user_mgr._users.get(sender_open_id)
+        needs_name = existing is None or existing.get("name") == sender_open_id
+        display_name = self._fetch_user_name(sender_open_id) if needs_name else sender_open_id
+        user_mgr.register(sender_open_id, name=display_name)
+        if user_mgr.get_permission(sender_open_id) == PERMISSION_BLOCKED:
+            context = self._compose_context(
+                ContextType.TEXT, "blocked",
+                isgroup=feishu_msg.is_group, msg=feishu_msg,
+                receive_id_type=receive_id_type, no_need_at=True
+            )
+            if context:
+                self._send_status_card("你没有使用权限，请联系管理员。", context, title="无权限", template="red")
+            return
+
         # 处理文件缓存逻辑
         from channel.file_cache import get_file_cache
         file_cache = get_file_cache()
@@ -529,6 +568,8 @@ class FeiShuChanel(ChatChannel):
         )
         if context:
             context["on_event"] = self._make_stream_callback(context)
+            context["allowed_skills"] = user_mgr.get_allowed_skills(feishu_msg.from_user_id)
+            context["allowed_tools"] = user_mgr.get_allowed_tools(feishu_msg.from_user_id)
             self.produce(context)
         logger.debug(f"[FeiShu] query={feishu_msg.content}, type={feishu_msg.ctype}")
 

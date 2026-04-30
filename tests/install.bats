@@ -63,9 +63,9 @@ PY
 @test "exits 1 when git is missing" {
   printf '#!/bin/sh\nexit 0\n' > "$TEST_HOME/bin/python3"
   chmod +x "$TEST_HOME/bin/python3"
-  ln -s /bin/sh "$TEST_HOME/bin/bash"
-  ln -s /bin/mkdir "$TEST_HOME/bin/mkdir"
-  ln -s /usr/bin/dirname "$TEST_HOME/bin/dirname"
+  for cmd in bash sh mkdir dirname cat grep chmod; do
+    ln -sf "$(command -v $cmd)" "$TEST_HOME/bin/$cmd" 2>/dev/null || true
+  done
   export PATH="$TEST_HOME/bin"
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]
@@ -75,9 +75,9 @@ PY
 @test "exits 1 when python3 is missing" {
   printf '#!/bin/sh\nexit 0\n' > "$TEST_HOME/bin/git"
   chmod +x "$TEST_HOME/bin/git"
-  ln -s /bin/sh "$TEST_HOME/bin/bash"
-  ln -s /bin/mkdir "$TEST_HOME/bin/mkdir"
-  ln -s /usr/bin/dirname "$TEST_HOME/bin/dirname"
+  for cmd in bash sh mkdir dirname cat grep chmod; do
+    ln -sf "$(command -v $cmd)" "$TEST_HOME/bin/$cmd" 2>/dev/null || true
+  done
   export PATH="$TEST_HOME/bin"
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]

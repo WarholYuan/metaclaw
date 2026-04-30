@@ -104,6 +104,7 @@ source "$VENV_DIR/bin/activate"
 
 python -m pip install --upgrade pip setuptools wheel
 if [[ "$DEV_INSTALL" == "1" ]]; then
+  # shellcheck disable=SC1087
   python -m pip install -e "$PROJECT_DIR[dev]"
 else
   python -m pip install -e "$PROJECT_DIR"

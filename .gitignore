@@ -24,3 +24,13 @@ config.json
 /memory/
 /reports/
 /knowledge/
+
+# Secrets
+.env
+*.env.local
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tgz

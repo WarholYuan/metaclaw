@@ -3,6 +3,15 @@
   "version": "0.1.1",
   "description": "Installer wrapper for MetaClaw",
   "license": "MIT",
+  "author": "mianhuatang913",
+  "keywords": [
+    "metaclaw",
+    "ai",
+    "agent",
+    "wechat",
+    "feishu",
+    "installer"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WarholYuan/metaclaw-installer.git"
@@ -23,7 +32,10 @@
   ],
   "scripts": {
     "install:local": "bash scripts/install.sh",
-    "test": "node --test skills/web-access/tests/find-url.test.mjs"
+    "test": "node --test skills/web-access/tests/find-url.test.mjs npm/bin/metaclaw-install.test.mjs",
+    "test:bats": "bats tests/install.bats",
+    "lint:sh": "shellcheck scripts/install.sh",
+    "lint:js": "node --check npm/bin/metaclaw-install.js"
   },
   "engines": {
     "node": ">=18"

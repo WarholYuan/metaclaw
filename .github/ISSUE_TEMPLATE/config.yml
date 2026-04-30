@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Issue
+    url: https://github.com/WarholYuan/metaclaw-installer/security/advisories/new
+    about: Report a security vulnerability privately
+  - name: MetaClaw Core Issues
+    url: https://github.com/WarholYuan/metaclaw/issues
+    about: Issues with the MetaClaw application itself (not the installer)

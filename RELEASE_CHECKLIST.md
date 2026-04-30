@@ -2,6 +2,27 @@
 
 这份清单用于把当前仓库发布到 GitHub，并让用户可以通过 `curl` 或 `npx` 安装和更新。
 
+## 0. 版本号 bump 与 CHANGELOG
+
+每次发布前先确定语义化版本（[SemVer](https://semver.org/)）：
+
+- `feat:` 提交 → MINOR（0.1.x → 0.2.0）
+- `fix:` / `chore:` / `docs:` 提交 → PATCH（0.1.0 → 0.1.1）
+- `feat!:` 或 commit body 含 `BREAKING CHANGE:` → MAJOR（0.x → 1.0.0）
+
+更新这两个文件：
+
+1. `package.json` 的 `version` 字段
+2. `CHANGELOG.md`：把 `[Unreleased]` section 的内容移到新版本号下，加日期，再开一个新的空 `[Unreleased]`
+
+提交并打 tag：
+
+```bash
+git add package.json CHANGELOG.md
+git commit -m "chore: release v$(node -p "require('./package.json').version")"
+git tag "v$(node -p "require('./package.json').version")"
+```
+
 ## 1. 必须先做：轮换密钥
 
 这些密钥曾经出现在本地仓库历史里。虽然当前 Git 历史已经清理过，但安全上必须去对应平台后台重新生成/作废旧密钥。

@@ -34,3 +34,5 @@ node_modules/
 
 # Build artifacts
 *.tgz
+node_modules/
+coverage/

@@ -37,6 +37,7 @@
     "test:bats": "bats tests/install.bats",
     "lint:sh": "shellcheck scripts/install.sh",
     "lint:js": "node --check npm/bin/metaclaw-install.js",
+    "prepare": "husky",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:patch": "standard-version --release-as patch",
@@ -47,6 +48,8 @@
   },
   "devDependencies": {
     "c8": "^11.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "standard-version": "^9.5.0"
   }
 }

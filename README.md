@@ -47,7 +47,7 @@ The updater pulls the latest Git commit, updates submodules, and reinstalls the 
 ```text
 ~/.metaclaw/src        # Source checkout
 ~/.metaclaw/venv       # Python virtual environment
-~/.metaclaw/workspace  # Runtime workspace and user data
+~/.metaclaw/workspace  # Runtime workspace, config, and user data
 ~/.local/bin/metaclaw  # CLI shim
 ```
 

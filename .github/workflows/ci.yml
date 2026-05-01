@@ -34,6 +34,23 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm test
 
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade pip setuptools wheel
+      - run: python -m pip install -e "metaclaw/metaclaw[dev]"
+      - run: python -m pytest metaclaw/metaclaw/tests -q
+
   npm-pack:
     runs-on: ubuntu-latest
     steps:
@@ -51,3 +68,28 @@ jobs:
         with:
           bats-version: 1.11.0
       - run: bats tests/install.bats
+
+  fresh-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: git branch smoke-install
+      - name: Install from a fresh HOME
+        run: |
+          set -euo pipefail
+          export HOME="$RUNNER_TEMP/metaclaw-home"
+          mkdir -p "$HOME"
+          bash scripts/install.sh \
+            --repo "file://$GITHUB_WORKSPACE" \
+            --branch smoke-install \
+            --dir "$HOME/.metaclaw/src" \
+            --workspace "$HOME/.metaclaw/workspace" \
+            --bin-dir "$HOME/.local/bin"
+          "$HOME/.local/bin/metaclaw" help
+          test -f "$HOME/.metaclaw/workspace/config.json"
+          test ! -f "$HOME/.metaclaw/src/metaclaw/metaclaw/config.json"

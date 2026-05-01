@@ -46,7 +46,7 @@ User
  │                              │ 4. Update submodule              │
  │                              │ 5. Create Python venv            │
  │                              │ 6. pip install -e the app        │
- │                              │ 7. Copy config-template.json     │
+ │                              │ 7. Create workspace config       │
  │                              │ 8. (Optional) install browser    │
  │                              │ 9. Save install.env              │
  │                              │ 10. Create CLI shims             │
@@ -56,7 +56,7 @@ User
 ~/.metaclaw/                                       ~/.local/bin/
 ├── src/        (source checkout w/ submodule)     ├── metaclaw
 ├── venv/       (Python virtualenv)                └── metaclaw-update
-├── workspace/  (runtime data, user state)
+├── workspace/  (config, runtime data, user state)
 └── install.env (saved install settings)
 ```
 
@@ -77,7 +77,7 @@ The installer creates `~/.local/bin/metaclaw-update` which:
 2. Re-runs `scripts/install.sh` with those flags
 3. The script's "update existing checkout" branch does `git fetch && git pull --ff-only && submodule update --init --recursive`, then re-runs `pip install -e`
 
-User workspace data under `~/.metaclaw/workspace/` is never touched by the updater.
+User workspace data under `~/.metaclaw/workspace/` is preserved by the updater. If `config.json` already exists there, the installer leaves it unchanged.
 
 ## Skills
 
@@ -93,13 +93,13 @@ Three layers, all run in CI:
 2. **Unit tests** — `node --test` for JS (`npm/bin/*.test.mjs`), small `node --test` cases for skill utilities (`skills/web-access/tests/`)
 3. **Integration tests** — `bats` for the bash installer (`tests/install.bats`), using stub `git`/`python3` binaries on PATH and a temporary `$HOME`
 
-The CI does **not** run a full real installation. That is left for the manual checklist in `RELEASE_CHECKLIST.md`.
+CI also runs a fresh-install smoke test from a temporary HOME and verifies the installed CLI starts.
 
 ## Security Boundary
 
 - No secrets in this repo. `.gitignore` excludes `.claude/`, `config.json`, `.env`, `metaclaw/config.json`.
 - The installer does not require any credentials. It only clones a public repo and runs `pip install`.
-- Application-level secrets (API keys, Feishu tokens) are configured by the user post-install in `~/.metaclaw/src/metaclaw/metaclaw/config.json`.
+- Application-level secrets (API keys, Feishu tokens) are configured by the user post-install in `~/.metaclaw/workspace/config.json`.
 - `gitleaks` runs in CI on every push and weekly to catch accidental secret commits.
 
 See [`SECURITY.md`](SECURITY.md) for vulnerability reporting.

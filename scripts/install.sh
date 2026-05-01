@@ -110,10 +110,16 @@ else
   python -m pip install -e "$PROJECT_DIR"
 fi
 
-CONFIG_FILE="$PROJECT_DIR/config.json"
-if [[ ! -f "$CONFIG_FILE" && -f "$PROJECT_DIR/config-template.json" ]]; then
-  cp "$PROJECT_DIR/config-template.json" "$CONFIG_FILE"
+CONFIG_FILE="$WORKSPACE_DIR/config.json"
+LEGACY_CONFIG_FILE="$PROJECT_DIR/config.json"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  if [[ -f "$LEGACY_CONFIG_FILE" ]]; then
+    cp "$LEGACY_CONFIG_FILE" "$CONFIG_FILE"
+  elif [[ -f "$PROJECT_DIR/config-template.json" ]]; then
+    cp "$PROJECT_DIR/config-template.json" "$CONFIG_FILE"
+  fi
 fi
+export METACLAW_CONFIG_FILE="$CONFIG_FILE"
 
 if [[ "$INSTALL_BROWSER" == "1" ]]; then
   metaclaw install-browser
@@ -135,6 +141,7 @@ if [[ "$CREATE_SHIMS" == "1" ]]; then
   mkdir -p "$BIN_DIR"
   cat > "$BIN_DIR/metaclaw" <<SHIM
 #!/usr/bin/env bash
+export METACLAW_CONFIG_FILE="$CONFIG_FILE"
 exec "$VENV_DIR/bin/metaclaw" "\$@"
 SHIM
   chmod +x "$BIN_DIR/metaclaw"

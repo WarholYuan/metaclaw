@@ -195,7 +195,7 @@ metaclaw-update
 - 更新 submodule
 - 复用 Python venv
 - 重新 `pip install -e`
-- 保留用户 workspace 数据
+- 保留用户 workspace 数据和 `~/.metaclaw/workspace/config.json`
 
 ## 8. 当前发布包结构
 
@@ -214,7 +214,7 @@ scripts/install.sh
 ```text
 ~/.metaclaw/src        # 源码 checkout
 ~/.metaclaw/venv       # Python 虚拟环境
-~/.metaclaw/workspace  # 用户运行数据
+~/.metaclaw/workspace  # 用户配置和运行数据
 ~/.local/bin/metaclaw
 ~/.local/bin/metaclaw-update
 ```
@@ -227,7 +227,8 @@ bash -n scripts/install.sh
 node --check npm/bin/metaclaw-install.js
 npm pack --dry-run
 node --test skills/web-access/tests/find-url.test.mjs
-python3 -m pytest -q
+python3 -m pytest metaclaw/metaclaw/tests -q
+bats tests/install.bats
 ```
 
 密钥扫描：

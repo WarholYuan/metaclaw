@@ -78,7 +78,7 @@ The installer keeps source code and runtime data separate:
 ```text
 ~/.metaclaw/src        # Git checkout / source code
 ~/.metaclaw/venv       # Python virtual environment
-~/.metaclaw/workspace  # Agent workspace and runtime data
+~/.metaclaw/workspace  # Agent workspace, config, and runtime data
 ~/.local/bin/metaclaw  # CLI shim
 ```
 
@@ -95,7 +95,7 @@ export PATH="$HOME/.local/bin:$PATH"
 3. Creates or reuses the Python virtual environment.
 4. Installs MetaClaw with `pip install -e`.
 5. Creates `metaclaw` and `metaclaw-update` shims in `~/.local/bin`.
-6. Keeps runtime workspace data outside the source checkout.
+6. Writes `config.json` into the workspace and keeps runtime data outside the source checkout.
 
 ## Publisher Checklist
 

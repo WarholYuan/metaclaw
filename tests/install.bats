@@ -21,6 +21,8 @@ prep_stubs() {
   touch "$TEST_HOME/.metaclaw/src/.gitmodules"
   printf '[project]\nname = "metaclaw"\n' \
     > "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw/pyproject.toml"
+  printf '{"model": "test-model"}\n' \
+    > "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw/config-template.json"
 
   cat > "$TEST_HOME/bin/git" <<'GIT'
 #!/bin/sh
@@ -113,6 +115,29 @@ PY
   [ ! -f "$TEST_HOME/.local/bin/metaclaw-update" ]
 }
 
+@test "config is created in workspace, not source checkout" {
+  prep_stubs
+  export METACLAW_CREATE_SHIMS=0
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.metaclaw/workspace/config.json" ]
+  [ ! -f "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw/config.json" ]
+  grep -q "test-model" "$TEST_HOME/.metaclaw/workspace/config.json"
+}
+
+@test "existing project config is migrated to workspace config" {
+  prep_stubs
+  export METACLAW_CREATE_SHIMS=0
+  printf '{"model": "legacy-model"}\n' \
+    > "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw/config.json"
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.metaclaw/workspace/config.json" ]
+  grep -q "legacy-model" "$TEST_HOME/.metaclaw/workspace/config.json"
+}
+
 @test "shims are created with executable bit by default" {
   prep_stubs
   run bash "$SCRIPT"
@@ -120,5 +145,6 @@ PY
   [ -x "$TEST_HOME/.local/bin/metaclaw" ]
   [ -x "$TEST_HOME/.local/bin/metaclaw-update" ]
   grep -q "exec.*venv/bin/metaclaw" "$TEST_HOME/.local/bin/metaclaw"
+  grep -q "METACLAW_CONFIG_FILE=.*workspace/config.json" "$TEST_HOME/.local/bin/metaclaw"
   grep -q "install.sh" "$TEST_HOME/.local/bin/metaclaw-update"
 }

@@ -211,14 +211,27 @@ exec "$VENV_DIR/bin/metaclaw" "\$@"
 SHIM
   chmod +x "$BIN_DIR/metaclaw"
 
-  cat > "$BIN_DIR/metaclaw-update" <<SHIM
+  cat > "$BIN_DIR/metaclaw-update" <<'SHIM'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ -f "\$HOME/.metaclaw/install.env" ]]; then
+if [[ -f "$HOME/.metaclaw/install.env" ]]; then
   # shellcheck disable=SC1091
-  source "\$HOME/.metaclaw/install.env"
+  source "$HOME/.metaclaw/install.env"
 fi
-exec bash "$INSTALL_DIR/scripts/install.sh" "\$@"
+
+# Check for updates before running (skip in test environments)
+if [[ "${METACLAW_SKIP_UPDATE_CHECK:-0}" != "1" ]]; then
+  LATEST_TAG=$(git ls-remote --tags "${METACLAW_REPO_URL:-https://github.com/WarholYuan/metaclaw-installer.git}" 2>/dev/null | tail -1 | sed 's/.*refs\/tags\///' || echo "")
+  CURRENT_VERSION="0.1.1"  # Will be replaced during release
+
+  if [[ -n "${LATEST_TAG:-}" && "$LATEST_TAG" != "v$CURRENT_VERSION" ]]; then
+    echo -e "\033[1;33m⚠  New version available: $LATEST_TAG (current: v$CURRENT_VERSION)\033[0m"
+    echo "   Run this command to update:"
+    echo ""
+  fi
+fi
+
+exec bash "$INSTALL_DIR/scripts/install.sh" "$@"
 SHIM
   chmod +x "$BIN_DIR/metaclaw-update"
   log_success "CLI commands created in $BIN_DIR"

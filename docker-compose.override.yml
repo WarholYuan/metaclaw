@@ -1,0 +1,6 @@
+services:
+  metaclaw:
+    env_file:
+      - .env
+    volumes:
+      - ./workspace:/app/workspace

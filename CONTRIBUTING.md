@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution. MetaClaw is a new personal AI agent project with a Python application core and a small release installer for `curl` and `npm` users.
 
-This repository owns the public install path, release workflow, installer tests, documentation, and the application source component used by the installer.
+This repository owns the public install path, release workflow, installer tests, documentation, and bundled Python application source.
 
 ## Repo Layout
 

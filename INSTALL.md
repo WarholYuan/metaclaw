@@ -64,7 +64,7 @@ The installer also creates a local update command:
 metaclaw-update
 ```
 
-`metaclaw-update` reuses the saved install settings from `~/.metaclaw/install.env`, pulls the latest MetaClaw source, updates the application component, and reinstalls the Python package into the existing virtual environment.
+`metaclaw-update` reuses the saved install settings from `~/.metaclaw/install.env`, pulls the latest MetaClaw source, and reinstalls the Python package into the existing virtual environment.
 
 ## After Installation
 
@@ -91,7 +91,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ## What the Installer Does
 
 1. Clones or updates the GitHub repo.
-2. Updates the application source component.
+2. Verifies the bundled Python application source.
 3. Creates or reuses the Python virtual environment.
 4. Installs MetaClaw with `pip install -e`.
 5. Creates `metaclaw` and `metaclaw-update` shims in `~/.local/bin`.

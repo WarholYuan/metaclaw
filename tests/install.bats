@@ -18,7 +18,6 @@ teardown() {
 prep_stubs() {
   mkdir -p "$TEST_HOME/.metaclaw/src/.git"
   mkdir -p "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw"
-  touch "$TEST_HOME/.metaclaw/src/.gitmodules"
   printf '[project]\nname = "metaclaw"\n' \
     > "$TEST_HOME/.metaclaw/src/metaclaw/metaclaw/pyproject.toml"
   printf '{"model": "test-model"}\n' \

@@ -2,22 +2,22 @@
 
 This document explains how MetaClaw is packaged, installed, and updated. For end-user install instructions see [README.md](README.md) and [INSTALL.md](INSTALL.md).
 
-## Release Model
+## Repository Model
 
-MetaClaw has two practical layers in this repository:
+MetaClaw is now published as a single repository:
 
 ```text
-MetaClaw release repository
+MetaClaw repository
 ├── scripts/install.sh              # curl installer
 ├── npm/bin/metaclaw-install.js     # npx entry point
 ├── tests/                          # installer integration tests
 ├── skills/                         # development skills, not npm payload
-└── metaclaw/metaclaw/              # Python application source component
+└── metaclaw/metaclaw/              # Python application source
 ```
 
-The npm package is published as `@mianhuatang913/metaclaw`. The package does not ship the full Python application; it ships the small bootstrapper that retrieves this repository, prepares a Python virtual environment, installs the application component, and creates local CLI shims.
+The npm package is published as `@mianhuatang913/metaclaw`. The package stays small: it ships the bootstrapper that retrieves this repository, prepares a Python virtual environment, installs the bundled Python application, and creates local CLI shims.
 
-This keeps the end-user install command small while still letting the project maintain the Python application, skills, Docker assets, docs, and release scripts together.
+This keeps the end-user install command small while the public GitHub repository remains complete and cloneable without extra private dependencies.
 
 ## Install Flow
 
@@ -36,7 +36,7 @@ scripts/install.sh
  |-- parse flags and environment overrides
  |-- check git and python3
  |-- clone or update MetaClaw source
- |-- update application source component
+ |-- verify bundled Python application source
  |-- create Python virtual environment
  |-- pip install -e the application
  |-- create workspace config
@@ -68,7 +68,7 @@ Installed layout:
 | `scripts/install.sh` | Main installer used by curl, npm, updater, and smoke tests. |
 | `npm/bin/metaclaw-install.js` | Node entry point for `npx`; resolves the bash script path and forwards arguments. |
 | `package.json` | npm metadata. The `files` field keeps the published package intentionally small. |
-| `metaclaw/metaclaw/` | Python application source component installed into the virtual environment. |
+| `metaclaw/metaclaw/` | Python application source installed into the virtual environment. |
 | `tests/install.bats` | End-to-end installer tests using temporary HOME and stubbed external commands. |
 
 ## Update Flow
@@ -77,7 +77,7 @@ The installer creates `~/.local/bin/metaclaw-update`, which:
 
 1. Sources `~/.metaclaw/install.env` to recover the original install settings.
 2. Re-runs `scripts/install.sh` with those settings.
-3. Updates the source checkout, refreshes the application source component, and re-runs `pip install -e`.
+3. Updates the source checkout and re-runs `pip install -e`.
 
 User workspace data under `~/.metaclaw/workspace/` is preserved by the updater. If `config.json` already exists there, the installer leaves it unchanged.
 
@@ -85,7 +85,7 @@ User workspace data under `~/.metaclaw/workspace/` is preserved by the updater. 
 
 The root `skills/` directory contains development skills used while building MetaClaw. They are not part of the npm payload because `package.json#files` does not include `skills/`.
 
-Runtime skills that belong to the Python application live under the application source component.
+Runtime skills that belong to the Python application live under the bundled application source.
 
 ## Testing Strategy
 

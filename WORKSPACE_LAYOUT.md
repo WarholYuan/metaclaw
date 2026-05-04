@@ -1,6 +1,6 @@
 # Workspace and Source Layout
 
-This repository is the public installer/source distribution layer. Runtime data is intentionally kept out of Git.
+This repository is the public MetaClaw source and installer distribution. Runtime data is intentionally kept out of Git.
 
 ## Public Source Area
 
@@ -14,7 +14,7 @@ scripts/install.sh
 npm/bin/metaclaw-install.js
 package.json
 skills/
-metaclaw/metaclaw   # Git submodule pointing to the Python MetaClaw source
+metaclaw/metaclaw   # Bundled Python MetaClaw source
 ```
 
 ## Local Workspace Area

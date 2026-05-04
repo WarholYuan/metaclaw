@@ -122,16 +122,18 @@ else
     exit 1
   fi
   log_info "Cloning MetaClaw from $REPO_URL to $INSTALL_DIR"
-  git clone --recursive --branch "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
+  git clone --branch "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
   log_success "Source cloned"
 fi
 
-step "Updating submodules..."
+step "Checking bundled application source..."
 if [[ -f "$INSTALL_DIR/.gitmodules" ]]; then
   git -C "$INSTALL_DIR" submodule update --init --recursive
   log_success "Submodules updated"
+elif [[ -f "$INSTALL_DIR/metaclaw/metaclaw/pyproject.toml" || -f "$INSTALL_DIR/pyproject.toml" ]]; then
+  log_success "Bundled application source found"
 else
-  log_error "No .gitmodules found. The repository must include the MetaClaw Python source or a valid submodule mapping."
+  log_error "Could not find bundled MetaClaw Python source."
   exit 1
 fi
 

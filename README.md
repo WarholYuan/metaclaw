@@ -2,7 +2,7 @@
 
 MetaClaw is a personal AI agent project with a Python application core, channel integrations, skills, memory, and a command-line workflow for local deployment.
 
-This repository is the release and installation home for MetaClaw. It gives users a simple `curl` or `npm` entry point, creates an isolated Python environment, installs the MetaClaw CLI, and keeps runtime data outside the source checkout.
+This repository is the home for MetaClaw. It gives users a simple `curl` or `npm` entry point, creates an isolated Python environment, installs the MetaClaw CLI, and keeps runtime data outside the source checkout.
 
 ## Install
 
@@ -40,7 +40,7 @@ Or run the installer again:
 curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 ```
 
-The updater pulls the latest MetaClaw release source, updates the application component, and reinstalls the Python package into the existing virtual environment.
+The updater pulls the latest MetaClaw source and reinstalls the Python package into the existing virtual environment.
 
 ## Layout
 

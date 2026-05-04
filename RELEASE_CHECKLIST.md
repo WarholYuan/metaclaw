@@ -192,7 +192,7 @@ metaclaw-update
 也可以重复运行安装命令。安装器会：
 
 - 拉取最新 GitHub 代码
-- 更新 submodule
+- 确认 bundled Python source 可安装
 - 复用 Python venv
 - 重新 `pip install -e`
 - 保留用户 workspace 数据和 `~/.metaclaw/workspace/config.json`
@@ -241,7 +241,6 @@ git grep -n -E 'sk-[A-Za-z0-9]{20,}|api_key"\\s*:\\s*"[^"]+|app_secret"\\s*:\\s*
 
 ## 10. 已知注意事项
 
-- 当前根仓库使用应用源码组件来安装 Python 项目。
-- 如果应用源码组件指向独立远端，必须确认该 commit 已经 push 到对应远端，否则用户 clone 会失败。
+- 当前仓库直接包含 Python 应用源码，不依赖私有 submodule。
 - 历史已经重写过，如果旧远端已有内容，推送需要 `--force`。
 - 强烈建议 GitHub 仓库开启 secret scanning / push protection。

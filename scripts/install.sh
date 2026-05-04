@@ -14,7 +14,7 @@ log_success() { echo -e "${GREEN}✔${NC}  $*"; }
 log_warn() { echo -e "${YELLOW}⚠${NC}  $*"; }
 log_error() { echo -e "${RED}✖${NC}  $*" >&2; }
 
-DEFAULT_REPO_URL="https://github.com/WarholYuan/metaclaw-installer.git"
+DEFAULT_REPO_URL="https://github.com/WarholYuan/MetaClaw.git"
 REPO_URL="${METACLAW_REPO_URL:-$DEFAULT_REPO_URL}"
 BRANCH="${METACLAW_BRANCH:-main}"
 INSTALL_DIR="${METACLAW_INSTALL_DIR:-$HOME/.metaclaw/src}"
@@ -31,7 +31,7 @@ cleanup_on_error() {
   if [ $exit_code -ne 0 ]; then
     log_error "Installation failed with exit code $exit_code"
     log_info "If you need help, please open an issue at:"
-    log_info "  https://github.com/WarholYuan/metaclaw-installer/issues"
+    log_info "  https://github.com/WarholYuan/MetaClaw/issues"
     log_info "Include the following information:"
     log_info "  OS: $(uname -s)"
     log_info "  Shell: $SHELL"
@@ -188,17 +188,25 @@ if [[ "$INSTALL_BROWSER" == "1" ]]; then
 fi
 
 step "Saving installation settings..."
-cat > "$HOME/.metaclaw/install.env" <<ENV
-METACLAW_REPO_URL='$REPO_URL'
-METACLAW_BRANCH='$BRANCH'
-METACLAW_INSTALL_DIR='$INSTALL_DIR'
-METACLAW_WORKSPACE_DIR='$WORKSPACE_DIR'
-METACLAW_VENV_DIR='$VENV_DIR'
-METACLAW_BIN_DIR='$BIN_DIR'
-METACLAW_INSTALL_BROWSER='$INSTALL_BROWSER'
-METACLAW_DEV_INSTALL='$DEV_INSTALL'
-METACLAW_CREATE_SHIMS='$CREATE_SHIMS'
-ENV
+write_install_env() {
+  : > "$HOME/.metaclaw/install.env"
+  write_install_env_var() {
+    local key="$1"
+    local value="$2"
+    printf '%s=%q\n' "$key" "$value" >> "$HOME/.metaclaw/install.env"
+  }
+
+  write_install_env_var METACLAW_REPO_URL "$REPO_URL"
+  write_install_env_var METACLAW_BRANCH "$BRANCH"
+  write_install_env_var METACLAW_INSTALL_DIR "$INSTALL_DIR"
+  write_install_env_var METACLAW_WORKSPACE_DIR "$WORKSPACE_DIR"
+  write_install_env_var METACLAW_VENV_DIR "$VENV_DIR"
+  write_install_env_var METACLAW_BIN_DIR "$BIN_DIR"
+  write_install_env_var METACLAW_INSTALL_BROWSER "$INSTALL_BROWSER"
+  write_install_env_var METACLAW_DEV_INSTALL "$DEV_INSTALL"
+  write_install_env_var METACLAW_CREATE_SHIMS "$CREATE_SHIMS"
+}
+write_install_env
 log_success "Settings saved"
 
 step "Creating CLI commands..."
@@ -221,8 +229,8 @@ fi
 
 # Check for updates before running (skip in test environments)
 if [[ "${METACLAW_SKIP_UPDATE_CHECK:-0}" != "1" ]]; then
-  LATEST_TAG=$(git ls-remote --tags "${METACLAW_REPO_URL:-https://github.com/WarholYuan/metaclaw-installer.git}" 2>/dev/null | tail -1 | sed 's/.*refs\/tags\///' || echo "")
-  CURRENT_VERSION="0.1.1"  # Will be replaced during release
+  LATEST_TAG=$(git ls-remote --tags "${METACLAW_REPO_URL:-https://github.com/WarholYuan/MetaClaw.git}" 2>/dev/null | tail -1 | sed 's/.*refs\/tags\///' || echo "")
+  CURRENT_VERSION="0.2.0"  # Will be replaced during release
 
   if [[ -n "${LATEST_TAG:-}" && "$LATEST_TAG" != "v$CURRENT_VERSION" ]]; then
     echo -e "\033[1;33m⚠  New version available: $LATEST_TAG (current: v$CURRENT_VERSION)\033[0m"

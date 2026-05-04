@@ -36,7 +36,7 @@ systemctl enable docker
 
 # 部署 MetaClaw
 echo "🤖 部署 MetaClaw..."
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/deploy.sh -o /usr/local/bin/metaclaw-deploy
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/deploy.sh -o /usr/local/bin/metaclaw-deploy
 chmod +x /usr/local/bin/metaclaw-deploy
 
 # 创建配置目录
@@ -44,8 +44,8 @@ mkdir -p /opt/metaclaw
 cd /opt/metaclaw
 
 # 下载配置文件
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/docker-compose.yml -o docker-compose.yml
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/.env.example -o .env.example
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/.env.example -o .env.example
 
 # 提示配置
 echo ""

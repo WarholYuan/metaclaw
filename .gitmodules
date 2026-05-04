@@ -1,4 +1,4 @@
 [submodule "metaclaw/metaclaw"]
 	path = metaclaw/metaclaw
-	url = https://github.com/WarholYuan/metaclaw.git
-	branch = master
+	url = https://github.com/WarholYuan/MetaClaw-Core.git
+	branch = main

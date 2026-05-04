@@ -4,10 +4,10 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | ✅        |
-| < 0.1   | ❌        |
+| 0.2.x   | ✅        |
+| < 0.2   | ❌        |
 
-Only the latest 0.1.x is supported. When 0.2 or 1.0 ships, this table will be updated.
+Only the latest 0.2.x is supported. When 1.0 ships, this table will be updated.
 
 ## Reporting a Vulnerability
 
@@ -16,7 +16,7 @@ Only the latest 0.1.x is supported. When 0.2 or 1.0 ships, this table will be up
 Use one of these channels:
 
 1. **GitHub Security Advisories (preferred)** — Open a private advisory at:
-   https://github.com/WarholYuan/metaclaw-installer/security/advisories/new
+   https://github.com/WarholYuan/MetaClaw/security/advisories/new
 
 2. **Email** — Contact the maintainer via the email listed on their GitHub profile.
 
@@ -37,10 +37,10 @@ In scope:
 - `npm/bin/metaclaw-install.js` — argument injection, prototype pollution
 - The npm package contents (anything in `package.json#files`)
 - Generated CLI shims under `~/.local/bin/`
+- MetaClaw application code and configuration handling in this repository
 
 Out of scope (report upstream):
 
-- Vulnerabilities in the MetaClaw application itself → https://github.com/WarholYuan/metaclaw/security
 - Vulnerabilities in third-party dependencies pulled by `pip install` → upstream maintainers
 - User misconfiguration of `config.json`
 

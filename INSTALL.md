@@ -1,18 +1,18 @@
 # Install MetaClaw
 
-MetaClaw is a Python application. The npm package is only a thin installer wrapper so users can install it with either `curl` or `npm`.
+MetaClaw is a new personal AI agent project with a Python application core and a release workflow designed for simple local installation. Users can install it with either `curl` or `npm`.
 
 ## curl
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 ```
 
 Custom repo, branch, and install paths:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash -s -- \
-  --repo https://github.com/WarholYuan/metaclaw-installer.git \
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash -s -- \
+  --repo https://github.com/WarholYuan/MetaClaw.git \
   --branch main \
   --dir "$HOME/.metaclaw/src" \
   --workspace "$HOME/.metaclaw/workspace"
@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/
 Install browser support too:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash -s -- --browser
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash -s -- --browser
 ```
 
 ## npm
@@ -35,7 +35,7 @@ npx @mianhuatang913/metaclaw
 From GitHub before npm publishing:
 
 ```bash
-npx github:WarholYuan/metaclaw-installer
+npx github:WarholYuan/MetaClaw
 ```
 
 Pass installer options after `--`:
@@ -49,7 +49,7 @@ npx @mianhuatang913/metaclaw -- --branch main --browser
 Users can update by running either installer command again:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 ```
 
 or:
@@ -64,7 +64,7 @@ The installer also creates a local update command:
 metaclaw-update
 ```
 
-`metaclaw-update` reuses the saved install settings from `~/.metaclaw/install.env`, pulls the latest Git commit, updates submodules, and reinstalls the Python package into the existing virtual environment.
+`metaclaw-update` reuses the saved install settings from `~/.metaclaw/install.env`, pulls the latest MetaClaw source, updates the application component, and reinstalls the Python package into the existing virtual environment.
 
 ## After Installation
 
@@ -91,7 +91,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ## What the Installer Does
 
 1. Clones or updates the GitHub repo.
-2. Updates submodules.
+2. Updates the application source component.
 3. Creates or reuses the Python virtual environment.
 4. Installs MetaClaw with `pip install -e`.
 5. Creates `metaclaw` and `metaclaw-update` shims in `~/.local/bin`.
@@ -99,7 +99,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ## Publisher Checklist
 
-Before publishing, replace `WarholYuan/metaclaw-installer` in these files if your GitHub repo path is different:
+Before publishing, replace `WarholYuan/MetaClaw` in these files if your GitHub repo path is different:
 
 - `scripts/install.sh`
 - `INSTALL.md`

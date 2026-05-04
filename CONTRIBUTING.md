@@ -1,21 +1,23 @@
-# Contributing to MetaClaw Installer
+# Contributing to MetaClaw
 
-Thanks for considering a contribution. This repo is the **installer wrapper** for MetaClaw — a thin layer that clones the application source, sets up a Python venv, and exposes CLI shims. The application itself lives in the [`WarholYuan/metaclaw`](https://github.com/WarholYuan/metaclaw) repo as a git submodule.
+Thanks for considering a contribution. MetaClaw is a new personal AI agent project with a Python application core and a small release installer for `curl` and `npm` users.
+
+This repository owns the public install path, release workflow, installer tests, documentation, and the application source component used by the installer.
 
 ## Repo Layout
 
-```
+```text
 .
-├── scripts/install.sh          # core installer (bash)
-├── npm/bin/metaclaw-install.js # npm/npx entry point (Node)
-├── tests/install.bats          # bats integration tests
+├── scripts/install.sh          # core installer
+├── npm/bin/metaclaw-install.js # npm/npx entry point
+├── tests/install.bats          # installer integration tests
 ├── npm/bin/*.test.mjs          # node:test unit tests
-├── skills/                     # custom Claude skills (not part of installer)
-├── metaclaw/                   # git submodule → MetaClaw application
-└── .github/                    # CI, issue/PR templates, dependabot
+├── skills/                     # development skills, not part of npm payload
+├── metaclaw/                   # MetaClaw application source and workspace assets
+└── .github/                    # CI, release workflow, issue/PR templates
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full installer flow.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full install and update flow.
 
 ## Local Development
 
@@ -23,23 +25,25 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full installer flow.
 
 - Node.js >= 18
 - Bash >= 4
-- `bats-core` for shell tests: `brew install bats-core` (macOS) or `apt install bats` (Debian/Ubuntu)
+- `bats-core` for shell tests: `brew install bats-core` on macOS or `apt install bats` on Debian/Ubuntu
 - `shellcheck` for shell linting: `brew install shellcheck` or `apt install shellcheck`
+- Python supported by the application test matrix
 
 ### Run Tests
 
 ```bash
-npm test                    # node tests (find-url + npm bin)
-npm run test:bats           # bats integration tests
-npm run lint:sh             # shellcheck on install.sh
-npm run lint:js             # node --check on npm bin
-bash -n scripts/install.sh  # bash syntax check
-npm pack --dry-run          # verify packed file list
+npm test
+npm run test:bats
+npm run lint:sh
+npm run lint:js
+bash -n scripts/install.sh
+npm pack --dry-run
+python -m pytest metaclaw/metaclaw/tests -q
 ```
 
 ### Try the Installer Locally
 
-The installer touches `~/.metaclaw/` and `~/.local/bin/`. To test without polluting your home dir:
+The installer touches `~/.metaclaw/` and `~/.local/bin/`. To test without polluting your home directory:
 
 ```bash
 HOME=$(mktemp -d) bash scripts/install.sh --branch main --no-shims
@@ -47,12 +51,12 @@ HOME=$(mktemp -d) bash scripts/install.sh --branch main --no-shims
 
 ## Pull Request Workflow
 
-1. Fork and clone the repo
-2. Create a feature branch: `git checkout -b feat/your-feature`
-3. Make your changes, keeping them minimal and surgical (no unrelated cleanup)
-4. Run all the test commands above
-5. Update `CHANGELOG.md` under the `[Unreleased]` section if your change is user-facing
-6. Push and open a PR using the PR template
+1. Fork and clone the repo.
+2. Create a feature branch: `git checkout -b feat/your-feature`.
+3. Keep changes focused; avoid unrelated cleanup.
+4. Run the relevant tests above.
+5. Update `CHANGELOG.md` under `[Unreleased]` if the change is user-facing.
+6. Push and open a PR using the PR template.
 
 ## Commit Messages
 
@@ -66,25 +70,25 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `test:` test-only changes
 - `ci:` CI config changes
 
-Breaking changes: append `!` after the type (e.g., `feat!:`) or include `BREAKING CHANGE:` in the commit body.
+Breaking changes: append `!` after the type, such as `feat!:`, or include `BREAKING CHANGE:` in the commit body.
 
 ## Versioning
 
-This project uses [SemVer](https://semver.org/):
+This project uses [SemVer](https://semver.org/) for the published installer package and release tags:
 
-- **MAJOR** (1.x → 2.0): breaking change to install path, env vars, shim contracts
-- **MINOR** (0.1 → 0.2): new feature, new flag
-- **PATCH** (0.1.0 → 0.1.1): bug fix, doc update, internal change
+- MAJOR: breaking change to install path, env vars, shim contracts, or release behavior
+- MINOR: new feature, new flag, or new supported install surface
+- PATCH: bug fix, doc update, or internal maintenance
 
-The maintainer bumps the version at release time per [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md). Contributors should not bump versions in PRs.
+Application-core versioning may evolve separately while MetaClaw is young. Release notes should call out both installer and application-impacting changes when they differ.
 
 ## Reporting Bugs
 
-Use the [bug report template](https://github.com/WarholYuan/metaclaw-installer/issues/new?template=bug_report.yml). Include OS, shell, install method (curl/npx), and the full command output.
+Use the [bug report template](https://github.com/WarholYuan/MetaClaw/issues/new?template=bug_report.yml). Include OS, shell, install method, and full command output.
 
 ## Reporting Security Issues
 
-Do **not** open a public issue. See [`SECURITY.md`](SECURITY.md).
+Do not open a public issue. See [SECURITY.md](SECURITY.md).
 
 ## Code of Conduct
 

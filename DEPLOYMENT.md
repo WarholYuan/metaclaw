@@ -19,7 +19,7 @@
 
 2. [ ] 下载部署脚本
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/cloud-deploy.sh | bash
+   curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/cloud-deploy.sh | bash
    ```
 
 3. [ ] 配置环境变量
@@ -138,6 +138,6 @@
 
 ## 联系支持
 
-- GitHub Issues：https://github.com/WarholYuan/metaclaw-installer/issues
+- GitHub Issues：https://github.com/WarholYuan/MetaClaw/issues
 - 文档中心：https://docs.metaclaw.ai/
 - 社区交流：https://link-ai.tech/metaclaw/create

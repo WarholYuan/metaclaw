@@ -1,105 +1,107 @@
 # Architecture
 
-This document explains how the MetaClaw installer wrapper is structured and what it does at install time. For end-user install instructions see [`README.md`](README.md) and [`INSTALL.md`](INSTALL.md).
+This document explains how MetaClaw is packaged, installed, and updated. For end-user install instructions see [README.md](README.md) and [INSTALL.md](INSTALL.md).
 
-## Two-Repo Model
+## Release Model
 
-```
-┌──────────────────────────────────────────┐
-│ metaclaw-installer (this repo)           │
-│   scripts/install.sh                     │
-│   npm/bin/metaclaw-install.js            │
-│   metaclaw/  ──► submodule               │
-└────────────────┬─────────────────────────┘
-                 │
-                 ▼
-┌──────────────────────────────────────────┐
-│ WarholYuan/metaclaw (upstream app)       │
-│   Python application: channels, plugins, │
-│   bridges, agents, CLI                   │
-└──────────────────────────────────────────┘
+MetaClaw has two practical layers in this repository:
+
+```text
+MetaClaw release repository
+├── scripts/install.sh              # curl installer
+├── npm/bin/metaclaw-install.js     # npx entry point
+├── tests/                          # installer integration tests
+├── skills/                         # development skills, not npm payload
+└── metaclaw/metaclaw/              # Python application source component
 ```
 
-The installer repo is published to npm as `@mianhuatang913/metaclaw` and to GitHub as `WarholYuan/metaclaw-installer`. The application repo is pulled in as a git submodule at `metaclaw/metaclaw/`.
+The npm package is published as `@mianhuatang913/metaclaw`. The package does not ship the full Python application; it ships the small bootstrapper that retrieves this repository, prepares a Python virtual environment, installs the application component, and creates local CLI shims.
 
-This split keeps installer changes (bash, packaging, CLI shims) decoupled from application changes (Python features, channel integrations).
+This keeps the end-user install command small while still letting the project maintain the Python application, skills, Docker assets, docs, and release scripts together.
 
 ## Install Flow
 
 Both `curl | bash` and `npx @mianhuatang913/metaclaw` end up running `scripts/install.sh`.
 
-```
+```text
 User
- │
- ├── curl ──► raw.githubusercontent.com/.../install.sh ──► bash
- │                                                          │
- ├── npx ──► npm/bin/metaclaw-install.js ──► spawn bash ────┤
- │                                                          │
- │                                                          ▼
- │                                                   scripts/install.sh
- │                                                          │
- │                                                          ▼
- │                              ┌──────────────────────────────────┐
- │                              │ 1. Parse flags / env overrides   │
- │                              │ 2. Check git, python3 present    │
- │                              │ 3. Clone or update source        │
- │                              │ 4. Update submodule              │
- │                              │ 5. Create Python venv            │
- │                              │ 6. pip install -e the app        │
- │                              │ 7. Create workspace config       │
- │                              │ 8. (Optional) install browser    │
- │                              │ 9. Save install.env              │
- │                              │ 10. Create CLI shims             │
- │                              └──────────────────────────────────┘
- │                                                          │
- ▼                                                          ▼
-~/.metaclaw/                                       ~/.local/bin/
-├── src/        (source checkout w/ submodule)     ├── metaclaw
-├── venv/       (Python virtualenv)                └── metaclaw-update
-├── workspace/  (config, runtime data, user state)
-└── install.env (saved install settings)
+ |
+ |-- curl --> raw.githubusercontent.com/.../install.sh --> bash
+ |
+ |-- npx  --> npm/bin/metaclaw-install.js --> bash
+ |
+ v
+scripts/install.sh
+ |
+ |-- parse flags and environment overrides
+ |-- check git and python3
+ |-- clone or update MetaClaw source
+ |-- update application source component
+ |-- create Python virtual environment
+ |-- pip install -e the application
+ |-- create workspace config
+ |-- optionally install browser support
+ |-- save install.env
+ |-- create metaclaw and metaclaw-update shims
+ v
+~/.metaclaw/ and ~/.local/bin/
+```
+
+Installed layout:
+
+```text
+~/.metaclaw/
+├── src/        # source checkout
+├── venv/       # Python virtual environment
+├── workspace/  # config, runtime data, user state
+└── install.env # saved install settings
+
+~/.local/bin/
+├── metaclaw
+└── metaclaw-update
 ```
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `scripts/install.sh` | The installer. ~175 lines of bash. All logic lives here. |
-| `npm/bin/metaclaw-install.js` | ~17-line Node wrapper that resolves the bash script path and spawns it with inherited stdio. Strips a leading `--` from argv (npx convention). |
-| `package.json` | npm metadata. The `files` field controls what gets shipped — only `npm/bin/`, `scripts/`, and the two README files. |
-| `metaclaw/` (submodule) | Pinned at a specific commit of `WarholYuan/metaclaw`. Updated via `git submodule update`. |
+| `scripts/install.sh` | Main installer used by curl, npm, updater, and smoke tests. |
+| `npm/bin/metaclaw-install.js` | Node entry point for `npx`; resolves the bash script path and forwards arguments. |
+| `package.json` | npm metadata. The `files` field keeps the published package intentionally small. |
+| `metaclaw/metaclaw/` | Python application source component installed into the virtual environment. |
+| `tests/install.bats` | End-to-end installer tests using temporary HOME and stubbed external commands. |
 
 ## Update Flow
 
-The installer creates `~/.local/bin/metaclaw-update` which:
+The installer creates `~/.local/bin/metaclaw-update`, which:
 
-1. Sources `~/.metaclaw/install.env` to recover the original install flags
-2. Re-runs `scripts/install.sh` with those flags
-3. The script's "update existing checkout" branch does `git fetch && git pull --ff-only && submodule update --init --recursive`, then re-runs `pip install -e`
+1. Sources `~/.metaclaw/install.env` to recover the original install settings.
+2. Re-runs `scripts/install.sh` with those settings.
+3. Updates the source checkout, refreshes the application source component, and re-runs `pip install -e`.
 
 User workspace data under `~/.metaclaw/workspace/` is preserved by the updater. If `config.json` already exists there, the installer leaves it unchanged.
 
 ## Skills
 
-The `skills/` directory contains custom Claude skills used during MetaClaw development. They are **not** part of the installer payload — `package.json#files` does not include `skills/`, so they don't ship to npm. They are kept in the repo only for the project's own development workflow.
+The root `skills/` directory contains development skills used while building MetaClaw. They are not part of the npm payload because `package.json#files` does not include `skills/`.
 
-See `skills/skills_config.json` for the skill registry and each `skills/<name>/SKILL.md` for individual skill specs.
+Runtime skills that belong to the Python application live under the application source component.
 
 ## Testing Strategy
 
-Three layers, all run in CI:
+These layers are covered locally and in CI:
 
-1. **Static checks** — `bash -n`, `node --check`, `shellcheck`, `npm pack --dry-run`
-2. **Unit tests** — `node --test` for JS (`npm/bin/*.test.mjs`), small `node --test` cases for skill utilities (`skills/web-access/tests/`)
-3. **Integration tests** — `bats` for the bash installer (`tests/install.bats`), using stub `git`/`python3` binaries on PATH and a temporary `$HOME`
-
-CI also runs a fresh-install smoke test from a temporary HOME and verifies the installed CLI starts.
+1. Static checks: `bash -n`, `node --check`, `shellcheck`, `npm pack --dry-run`.
+2. Node tests: `node --test` for npm entry points.
+3. Installer integration tests: `bats tests/install.bats`.
+4. Python tests: `pytest metaclaw/metaclaw/tests`.
+5. Fresh install smoke tests from a temporary HOME on Linux and macOS.
 
 ## Security Boundary
 
-- No secrets in this repo. `.gitignore` excludes `.claude/`, `config.json`, `.env`, `metaclaw/config.json`.
-- The installer does not require any credentials. It only clones a public repo and runs `pip install`.
-- Application-level secrets (API keys, Feishu tokens) are configured by the user post-install in `~/.metaclaw/workspace/config.json`.
-- `gitleaks` runs in CI on every push and weekly to catch accidental secret commits.
+- No secrets belong in the repository. `.gitignore` excludes `.claude/`, `config.json`, `.env`, runtime logs, and local data.
+- The installer does not require credentials. It only clones public source and runs `pip install`.
+- Application secrets such as API keys and Feishu tokens are configured by the user after install in `~/.metaclaw/workspace/config.json`.
+- Secret scanning runs in CI on every push, pull request, and weekly schedule.
 
-See [`SECURITY.md`](SECURITY.md) for vulnerability reporting.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.

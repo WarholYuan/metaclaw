@@ -1,7 +1,7 @@
 {
   "name": "@mianhuatang913/metaclaw",
   "version": "0.2.0",
-  "description": "Installer wrapper for MetaClaw",
+  "description": "MetaClaw release installer and CLI bootstrapper",
   "license": "MIT",
   "author": "mianhuatang913",
   "keywords": [
@@ -14,11 +14,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WarholYuan/metaclaw-installer.git"
+    "url": "git+https://github.com/WarholYuan/MetaClaw.git"
   },
-  "homepage": "https://github.com/WarholYuan/metaclaw-installer#readme",
+  "homepage": "https://github.com/WarholYuan/MetaClaw#readme",
   "bugs": {
-    "url": "https://github.com/WarholYuan/metaclaw-installer/issues"
+    "url": "https://github.com/WarholYuan/MetaClaw/issues"
   },
   "bin": {
     "metaclaw": "npm/bin/metaclaw-install.js",
@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "install:local": "bash scripts/install.sh",
-    "test": "node --test skills/web-access/tests/find-url.test.mjs npm/bin/metaclaw-install.test.mjs",
+    "test": "node --test npm/bin/metaclaw-install.test.mjs",
     "test:coverage": "c8 npm test",
     "test:bats": "bats tests/install.bats",
     "lint:sh": "shellcheck scripts/install.sh",

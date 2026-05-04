@@ -11,6 +11,6 @@
     {"type": "ci", "section": "CI/CD"},
     {"type": "build", "section": "Build"}
   ],
-  "commitUrlFormat": "https://github.com/WarholYuan/metaclaw-installer/commit/{{hash}}",
-  "compareUrlFormat": "https://github.com/WarholYuan/metaclaw-installer/compare/{{previousTag}}...{{currentTag}}"
+  "commitUrlFormat": "https://github.com/WarholYuan/MetaClaw/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/WarholYuan/MetaClaw/compare/{{previousTag}}...{{currentTag}}"
 }

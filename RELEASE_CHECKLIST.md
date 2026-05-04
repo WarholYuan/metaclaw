@@ -1,6 +1,6 @@
 # MetaClaw 发布前后清单
 
-这份清单用于把当前仓库发布到 GitHub，并让用户可以通过 `curl` 或 `npx` 安装和更新。
+这份清单用于把 MetaClaw 发布到 GitHub，并让用户可以通过 `curl` 或 `npx` 安装和更新。
 
 ## 0. 版本号 bump 与 CHANGELOG
 
@@ -51,10 +51,10 @@ data/*.pkl
 
 ## 2. 确认 GitHub 仓库地址
 
-当前安装器默认地址是：
+当前 MetaClaw 发布仓库默认地址是：
 
 ```text
-https://github.com/WarholYuan/metaclaw-installer.git
+https://github.com/WarholYuan/MetaClaw.git
 ```
 
 如果你的真实仓库不是这个地址，需要改这些文件：
@@ -69,7 +69,7 @@ package.json
 搜索命令：
 
 ```bash
-rg "WarholYuan/metaclaw-installer|@mianhuatang913/metaclaw"
+rg "WarholYuan/MetaClaw|@mianhuatang913/metaclaw"
 ```
 
 ## 3. 发布 GitHub
@@ -77,7 +77,7 @@ rg "WarholYuan/metaclaw-installer|@mianhuatang913/metaclaw"
 如果还没有 remote：
 
 ```bash
-git remote add origin https://github.com/WarholYuan/metaclaw-installer.git
+git remote add origin https://github.com/WarholYuan/MetaClaw.git
 ```
 
 因为历史已经重写过，首次推送或覆盖旧仓库需要 force：
@@ -105,7 +105,7 @@ git status
 在一个临时目录或测试机器上跑：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 ```
 
 安装成功后验证：
@@ -160,7 +160,7 @@ npx @mianhuatang913/metaclaw
 curl：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 ```
 
 npm：
@@ -172,7 +172,7 @@ npx @mianhuatang913/metaclaw
 GitHub npm 方式，适合 npm 包发布前测试：
 
 ```bash
-npx github:WarholYuan/metaclaw-installer
+npx github:WarholYuan/MetaClaw
 ```
 
 ## 7. 用户更新命令
@@ -241,8 +241,7 @@ git grep -n -E 'sk-[A-Za-z0-9]{20,}|api_key"\\s*:\\s*"[^"]+|app_secret"\\s*:\\s*
 
 ## 10. 已知注意事项
 
-- 当前根仓库使用 submodule 指向 `https://github.com/WarholYuan/metaclaw.git`。
-- 如果你希望完全独立维护，后续可以把 submodule 改成你自己的 fork。
-- 如果你修改了 submodule 指针，必须确认该 commit 已经 push 到对应远端，否则用户 clone 会失败。
+- 当前根仓库使用应用源码组件来安装 Python 项目。
+- 如果应用源码组件指向独立远端，必须确认该 commit 已经 push 到对应远端，否则用户 clone 会失败。
 - 历史已经重写过，如果旧远端已有内容，推送需要 `--force`。
 - 强烈建议 GitHub 仓库开启 secret scanning / push protection。

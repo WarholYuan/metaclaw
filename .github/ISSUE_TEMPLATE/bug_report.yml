@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in the MetaClaw installer
+description: Report a bug in MetaClaw
 labels: ["bug"]
 body:
   - type: markdown
@@ -46,9 +46,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: Installer Version
+      label: MetaClaw Version
       description: Run `npm view @mianhuatang913/metaclaw version` or check package.json
-      placeholder: "0.1.1"
+      placeholder: "0.2.0"
 
   - type: dropdown
     id: install-method

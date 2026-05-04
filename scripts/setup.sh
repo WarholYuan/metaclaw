@@ -22,7 +22,7 @@ CONFIG_FILE="${METACLAW_CONFIG_FILE:-$HOME/.metaclaw/workspace/config.json}"
 if [[ ! -f "$CONFIG_FILE" ]]; then
   log_error "Config file not found: $CONFIG_FILE"
   log_info "Please run the installer first:"
-  log_info "  curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash"
+  log_info "  curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash"
   exit 1
 fi
 

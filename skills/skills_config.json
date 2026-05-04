@@ -1,11 +1,4 @@
 {
-    "web-access": {
-        "name": "web-access",
-        "description": "联网操作统一策略调度 skill。覆盖搜索、网页抓取、登录后操作、社交媒体抓取、动态页面渲染、批量调研等所有网络任务。 触发场景：(1) 用户要求搜索信息或查看网页内容，(2) 访问需要登录/交互的网站，(3) 抓取小红书/微博/推特等社交媒体，(4) 读取动态渲染页面，(5) 批量调研多个目标，(6) 任何需要浏览器的网络任务。 核心能力：工具自动选择（web_fetch / browser / curl / vision）、浏览哲学（目标驱动）、站点经验复用、并行分治策略。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
     "blue-ocean-research": {
         "name": "blue-ocean-research",
         "description": "小红书/社交电商赛道双向验证研究。依赖 web-access skill 的联网策略调度能力，通过 browser/web_fetch/vision 获取多平台数据，输出飞书报告。 触发场景：(1) 用户给品类词/方向词，想找蓝海机会；(2) 用户给具体品名，想验证机会。 流程强制：web-access 锁定平台 → 采集 → 分析 → 报告末尾必须输出「蓝海性质」五级判定与下一步动作。\n",

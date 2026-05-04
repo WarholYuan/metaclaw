@@ -93,7 +93,19 @@ PY
   run bash "$SCRIPT" --branch develop
   [ "$status" -eq 0 ]
   [ -f "$TEST_HOME/.metaclaw/install.env" ]
-  grep -q "METACLAW_BRANCH='develop'" "$TEST_HOME/.metaclaw/install.env"
+  grep -q "METACLAW_BRANCH=develop" "$TEST_HOME/.metaclaw/install.env"
+}
+
+@test "install.env safely persists shell-special values" {
+  prep_stubs
+  export METACLAW_CREATE_SHIMS=0
+
+  run bash "$SCRIPT" --branch "feature/it's ready"
+  [ "$status" -eq 0 ]
+
+  # shellcheck disable=SC1091
+  source "$TEST_HOME/.metaclaw/install.env"
+  [ "$METACLAW_BRANCH" = "feature/it's ready" ]
 }
 
 @test "default options are persisted to install.env" {
@@ -102,9 +114,9 @@ PY
 
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  grep -q "METACLAW_BRANCH='main'" "$TEST_HOME/.metaclaw/install.env"
-  grep -q "METACLAW_INSTALL_BROWSER='0'" "$TEST_HOME/.metaclaw/install.env"
-  grep -q "METACLAW_DEV_INSTALL='0'" "$TEST_HOME/.metaclaw/install.env"
+  grep -q "METACLAW_BRANCH=main" "$TEST_HOME/.metaclaw/install.env"
+  grep -q "METACLAW_INSTALL_BROWSER=0" "$TEST_HOME/.metaclaw/install.env"
+  grep -q "METACLAW_DEV_INSTALL=0" "$TEST_HOME/.metaclaw/install.env"
 }
 
 @test "--no-shims prevents shim creation" {

@@ -133,6 +133,6 @@ if [[ -n "${BACKUP_DIR:-}" ]]; then
 fi
 
 log_info "To reinstall, run:"
-log_info "  curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash"
+log_info "  curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash"
 
 echo ""

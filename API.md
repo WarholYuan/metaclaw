@@ -8,7 +8,7 @@ MetaClaw provides a command-line interface (CLI) for managing your AI agent inst
 
 ```bash
 # Via curl
-curl -fsSL https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh | bash
 
 # Via npm
 npx @mianhuatang913/metaclaw
@@ -173,7 +173,7 @@ Location: `~/.metaclaw/workspace/config.json`
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `METACLAW_CONFIG_FILE` | Path to config file | `~/.metaclaw/workspace/config.json` |
-| `METACLAW_REPO_URL` | Installer repository URL | `https://github.com/WarholYuan/metaclaw-installer.git` |
+| `METACLAW_REPO_URL` | MetaClaw release repository URL | `https://github.com/WarholYuan/MetaClaw.git` |
 | `METACLAW_BRANCH` | Git branch to install | `main` |
 | `METACLAW_INSTALL_DIR` | Source installation directory | `~/.metaclaw/src` |
 | `METACLAW_WORKSPACE_DIR` | Workspace directory | `~/.metaclaw/workspace` |
@@ -229,8 +229,8 @@ Verify install script integrity:
 
 ```bash
 # Download script and checksum
-curl -O https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh
-curl -O https://raw.githubusercontent.com/WarholYuan/metaclaw-installer/main/scripts/install.sh.sha256
+curl -O https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh
+curl -O https://raw.githubusercontent.com/WarholYuan/MetaClaw/main/scripts/install.sh.sha256
 
 # Verify
 shasum -a 256 -c install.sh.sha256
@@ -247,7 +247,7 @@ bash install.sh
 
 ## Support
 
-- GitHub Issues: https://github.com/WarholYuan/metaclaw-installer/issues
+- GitHub Issues: https://github.com/WarholYuan/MetaClaw/issues
 - Documentation: https://docs.metaclaw.ai/
 - Community: https://link-ai.tech/metaclaw/create
 

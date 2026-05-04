@@ -53,6 +53,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -63,11 +65,30 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Bats
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.11.0
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e "metaclaw/metaclaw[dev]"
+
+      - name: Run Release Checks
         run: |
           bash -n scripts/install.sh
           node --check npm/bin/metaclaw-install.js
+          shellcheck scripts/install.sh
           npm test
+          bats tests/install.bats
+          python -m pytest metaclaw/metaclaw/tests -q
+          npm pack --dry-run
 
       - name: Publish to npm
         run: npm publish --access public
